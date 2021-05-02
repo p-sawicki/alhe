@@ -18,34 +18,20 @@ def parse(file_name: str) -> (dict, dict, dict):
             i += 2  # skip open bracket
             while text[i] != ')':
                 name = text[i]
-                i += 2  # skip open bracket
-
-                source = text[i]
-                i += 1
-
-                target = text[i]
-                i += 2  # skip close bracket
-
-                pre_installed_capacity = float(text[i])
-                i += 1
-
-                pre_installed_capacity_cost = float(text[i])
-                i += 1
-
-                routing_cost = float(text[i])
-                i += 1
-
-                setup_cost = float(text[i])
-                i += 2  # skip open bracket
+                source = text[i + 2]
+                target = text[i + 3]
+                pre_installed_capacity = float(text[i + 5])
+                pre_installed_capacity_cost = float(text[i + 6])
+                routing_cost = float(text[i + 7])
+                setup_cost = float(text[i + 8])
+                i += 10
 
                 module_capacities = []
                 module_costs = []
                 while text[i] != ')':
                     module_capacities.append(float(text[i]))
-                    i += 1
-
-                    module_costs.append(float(text[i]))
-                    i += 1
+                    module_costs.append(float(text[i + 1]))
+                    i += 2
 
                 links[name] = {
                     'source': source,
@@ -62,23 +48,14 @@ def parse(file_name: str) -> (dict, dict, dict):
             i += 2  # skip open bracket
             while text[i] != ')':
                 name = text[i]
-                i += 2  # skip open bracket
-
-                source = text[i]
-                i += 1
-
-                target = text[i]
-                i += 2  # skip close bracket
-
-                routing_unit = float(text[i])
-                i += 1
-
-                demand_value = float(text[i])
-                i += 1
+                source = text[i + 2]
+                target = text[i + 3]
+                routing_unit = float(text[i + 5])
+                demand_value = float(text[i + 6])
 
                 max_path_length = float('inf')
-                if (text[i] != 'UNLIMITED'):
-                    max_path_length = float(text[i])
+                if (text[i + 7] != 'UNLIMITED'):
+                    max_path_length = float(text[i + 7])
 
                 demands[name] = {
                     'source': source,
@@ -87,7 +64,7 @@ def parse(file_name: str) -> (dict, dict, dict):
                     'demand_value': demand_value,
                     'max_path_length': max_path_length
                 }
-                i += 1
+                i += 8
         elif text[i] == 'ADMISSIBLE_PATHS':
             i += 2  # skip open bracket
             while text[i] != ')':
