@@ -6,30 +6,39 @@ import math
 
 def obj_func(population: dict, links: dict, demands: dict, paths: dict) -> float:
     cost = 0.0
+    link_capacity = {}
+    for link in links.keys():
+        link_capacity[link] = 0.0
+
     for demand in demands.keys():
         path_choice = population[demand]['path_choice']
+        req_capacity = demands[demand]['demand_value']
+
         for i in range(len(path_choice)):
             if path_choice[i] != 0:
                 chosen = i
 
         links_visited = paths[demand][chosen]
+
         for i in range(len(links_visited)):
             link = links_visited[i]
             visits = population[demand]['visits'][i]
 
             setup_cost = links[link]['setup_cost']
             added_capacity = links[link]['module_capacities'][0]
-            req_capacity = demands[demand]['demand_value']
 
             cost += setup_cost * visits
-            capacity = added_capacity * visits
+            total_capacity = added_capacity * visits
+            link_capacity[link] += total_capacity - req_capacity
 
-            if capacity < req_capacity:
-                missing_capacity = req_capacity - capacity
-                additional_visits = math.ceil(
-                    missing_capacity / added_capacity)
+    for link in links.keys():
+        added_capacity = links[link]['module_capacities'][0]
+        setup_cost = links[link]['setup_cost']
 
-                cost += setup_cost * additional_visits
+        if link_capacity[link] < 0.0:
+            req_visits = -link_capacity[link] / added_capacity
+            cost += setup_cost * math.ceil(req_visits)
+
     return cost
 
 
