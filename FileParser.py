@@ -1,6 +1,6 @@
 """
     FileParser.py - implementation of input file parser
-    Using xml version of input data would be probably easier, but you need
+    Using XML version of input data would be probably easier, but you need
     to find it prior to writing vast and complicated text parser
 """
 

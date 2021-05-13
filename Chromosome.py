@@ -29,7 +29,7 @@ class Gene:
 
     def _normalize(self) -> None:
         """
-        Scale path_choice so that is always sums to 1
+        Scale path_choice so that it always sums to 1
         """
         m = max(self.path_choices)
         s = sum(self.path_choices)
@@ -63,6 +63,9 @@ class Chromosome:
         }
 
     def totalLinksCapacity(self) -> Dict[str, float]:
+        """
+        Return the total capacity of each link
+        """
         links: Dict[str, float] = {}
         for demand in self.network.demands.values():
             gene = self.genes[demand]
@@ -73,7 +76,7 @@ class Chromosome:
 
     def objFunc(self) -> float:
         """
-        Calculate the value of objective function, which consists of
+        Calculate the value of objective function which consists of
          1) checking that demands were met
          2) minimizing the number of visits
          3) minimizing the amount of wasted capacity
