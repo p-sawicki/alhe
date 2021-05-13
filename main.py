@@ -65,7 +65,7 @@ def main():
                         help='Path to file describing network model')
     parser.add_argument('--population-size', '-n', default=10,
                         metavar='N', type=int, help='Size of population used by genetic algorithm')
-    parser.add_argument('--epochs', metavar='N', type=int, default=1000,
+    parser.add_argument('--epochs', '-t', metavar='N', type=int, default=1000,
                         help='Number of cycles done before returning result')
     parser.add_argument('--mutation', type=float, default=0.1, help='Mutation factor')
     parser.add_argument('--multi-mode', dest='single_mode', action='store_false',
