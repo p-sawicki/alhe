@@ -1,47 +1,11 @@
-from parse import parse
-import pprint
-import random
-import math
+#!/usr/bin/env python3
 
+import argparse
 
-def obj_func(population: dict, links: dict, demands: dict, paths: dict) -> float:
-    cost = 0.0
-    link_capacity = {}
-    for link in links.keys():
-        link_capacity[link] = 0.0
+from Chromosome import Chromosome
+from NetworkModel import *
 
-    for demand in demands.keys():
-        path_choice = population[demand]['path_choice']
-        req_capacity = demands[demand]['demand_value']
-
-        for i in range(len(path_choice)):
-            if path_choice[i] != 0:
-                chosen = i
-
-        links_visited = paths[demand][chosen]
-
-        for i in range(len(links_visited)):
-            link = links_visited[i]
-            visits = population[demand]['visits'][i]
-
-            setup_cost = links[link]['setup_cost']
-            added_capacity = links[link]['module_capacities'][0]
-
-            cost += setup_cost * visits
-            total_capacity = added_capacity * visits
-            link_capacity[link] += total_capacity - req_capacity
-
-    for link in links.keys():
-        added_capacity = links[link]['module_capacities'][0]
-        setup_cost = links[link]['setup_cost']
-
-        if link_capacity[link] < 0.0:
-            req_visits = -link_capacity[link] / added_capacity
-            cost += setup_cost * math.ceil(req_visits)
-
-    return cost
-
-
+"""
 def init_pop(paths: dict) -> dict:
     population = {}
     for name in paths.keys():
@@ -59,14 +23,64 @@ def init_pop(paths: dict) -> dict:
             'path_choice': path_choice,
             'visits': visits
         }
-    return population
+    return population"""
+
+
+class GeneticAlgorithm:
+    def __init__(self, network: NetworkModel, n: int, epochs: int, mutationFactor: int, singleMode: bool):
+        self.network = network
+        self.n = n
+        self.epochs = epochs
+        self.mutationFactor = mutationFactor
+        self.costHistory = []
+
+        # Create initial population
+        self.population = [Chromosome(network, singleMode) for _ in range(self.n)]
+
+    def run(self) -> None:
+        for _ in range(self.epochs):
+            # Select new population
+            # TODO:
+
+            # Reproduce the chosen ones
+            # TODO:
+            assert(len(self.population) == self.n)
+
+            # Mutate
+            for p in self.population:
+                p.mutate(self.mutationFactor)
+
+            # Save cost of the best member in population
+            self.costHistory.append(
+                min([p.objFunc() for p in self.population])
+            )
+
+    def result(self) -> None:
+        pass
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Solve network design problems using genetic algorithm')
+    parser.add_argument('--model', '-f', metavar='FILE', type=str, default='polska.txt',
+                        help='Path to file describing network model')
+    parser.add_argument('--population-size', '-n', default=10,
+                        metavar='N', type=int, help='Size of population used by genetic algorithm')
+    parser.add_argument('--epochs', metavar='N', type=int, default=1000,
+                        help='Number of cycles done before returning result')
+    parser.add_argument('--mutation', type=float, default=0.1, help='Mutation factor')
+    parser.add_argument('--multi-mode', dest='single_mode', action='store_false',
+                        help='Whether to solve problem assuming that network support packets commutation')  # FIXME
+    args = parser.parse_args()
+
+    # Setup network model
+    network = NetworkModel(args.model)
+    network.parse()
+
+    # Roll the genetic algorithm
+    genetics = GeneticAlgorithm(network, args.population_size, args.epochs, args.mutation, args.single_mode)
+    genetics.run()
+    genetics.result()
 
 
 if __name__ == '__main__':
-    links, demands, paths = parse('polska.txt')
-    initial = init_pop(paths)
-    cost = obj_func(initial, links, demands, paths)
-
-    pp = pprint.PrettyPrinter(indent=1, width=160)
-    pp.pprint(initial)
-    print(cost)
+    main()
