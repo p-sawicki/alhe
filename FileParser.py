@@ -1,16 +1,26 @@
-def parse(file_name: str) -> (dict, dict, dict):
+"""
+    FileParser.py - implementation of input file parser
+    Using xml version of input data would be probably easier, but you need
+    to find it prior to writing vast and complicated text parser
+"""
+
+from typing import Any, Dict, List
+
+
+def parse(file_name: str) -> (List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]):
     """
     Parse text file with network description
 
-    param file_name - path to input text file
-
-    returns dicts - links, demands, paths
+    @param file_name - path to input text file
+    returns dicts - nodes, links, demands, paths
     """
-    text = open(file_name, 'r').read().split()
+    with open(file_name, 'r') as f:
+        text = f.read().split()
 
-    links = {}
-    demands = {}
-    paths = {}
+    nodes = []
+    links = []
+    demands = []
+    paths = []
 
     i = 0
     while i < len(text):
@@ -20,10 +30,6 @@ def parse(file_name: str) -> (dict, dict, dict):
                 name = text[i]
                 source = text[i + 2]
                 target = text[i + 3]
-                pre_installed_capacity = float(text[i + 5])
-                pre_installed_capacity_cost = float(text[i + 6])
-                routing_cost = float(text[i + 7])
-                setup_cost = float(text[i + 8])
                 i += 10
 
                 module_capacities = []
@@ -33,16 +39,13 @@ def parse(file_name: str) -> (dict, dict, dict):
                     module_costs.append(float(text[i + 1]))
                     i += 2
 
-                links[name] = {
+                links.append({
+                    'name': name,
                     'source': source,
                     'target': target,
-                    'pre_installed_capacity': pre_installed_capacity,
-                    'pre_installec_capacity_cost': pre_installed_capacity_cost,
-                    'routing_cost': routing_cost,
-                    'setup_cost': setup_cost,
-                    'module_capacities': module_capacities,
-                    'module_costs': module_costs
-                }
+                    'moduleCap': module_capacities,
+                    'moduleCost': module_costs
+                })
                 i += 1  # skip link-end close bracket
         elif text[i] == 'DEMANDS':
             i += 2  # skip open bracket
@@ -50,20 +53,19 @@ def parse(file_name: str) -> (dict, dict, dict):
                 name = text[i]
                 source = text[i + 2]
                 target = text[i + 3]
-                routing_unit = float(text[i + 5])
                 demand_value = float(text[i + 6])
 
                 max_path_length = float('inf')
-                if (text[i + 7] != 'UNLIMITED'):
+                if text[i + 7] != 'UNLIMITED':
                     max_path_length = float(text[i + 7])
 
-                demands[name] = {
+                demands.append({
+                    'name': name,
                     'source': source,
                     'target': target,
-                    'routing_unit': routing_unit,
-                    'demand_value': demand_value,
-                    'max_path_length': max_path_length
-                }
+                    'value': demand_value,
+                    'maxLen': max_path_length
+                })
                 i += 8
         elif text[i] == 'ADMISSIBLE_PATHS':
             i += 2  # skip open bracket
@@ -71,7 +73,7 @@ def parse(file_name: str) -> (dict, dict, dict):
                 name = text[i]
                 i += 2  # skip open bracket
 
-                paths[name] = []
+                part = []
                 while text[i] != ')':
                     i += 2  # skip path name and open bracket
 
@@ -80,8 +82,26 @@ def parse(file_name: str) -> (dict, dict, dict):
                         path.append(text[i])
                         i += 1
 
-                    paths[name].append(path)
+                    part.append(path)
                     i += 1  # skip path-end close bracket
                 i += 1  # skip demand-end close bracket
+                paths.append({
+                    'name': name,
+                    'paths': part
+                })
+        elif text[i] == 'NODES':
+            i += 2
+            while text[i] != ')':
+                name = text[i]
+                lon = text[i + 2]
+                lat = text[i + 3]
+
+                nodes.append({
+                    'name': name,
+                    'lon': lon,
+                    'lat': lat,
+                })
+                i += 1  # skip link-end close bracket
         i += 1
-    return links, demands, paths
+
+    return nodes, links, demands, paths
