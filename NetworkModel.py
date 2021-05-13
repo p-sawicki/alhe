@@ -20,12 +20,12 @@ class Link:
     """
     Class representing a connection between two cities
     """
-    def __init__(self, name: str, source: str, target: str, moduleCap: float, moduleCost: float):
+    def __init__(self, name: str, source: str, target: str, moduleCap: List[float], moduleCost: List[float]):
         self.name = name
         self.source = source
         self.target = target
-        self.module_capacity = moduleCap
-        self.module_cost = moduleCost
+        self.module_capacity = moduleCap[-1]
+        self.module_cost = moduleCost[-1]
 
     def __str__(self) -> str:
         return f'Link({self.name})["{self.source}" -> "{self.target}"]'
@@ -63,12 +63,12 @@ class NetworkModel:
 
     def parse(self) -> None:
         nodes, links, demands, paths = FileParser.parse(self.filename)
-        paths = {path['name']: path['paths'] for path in paths}
 
         for node in nodes:
             self.nodes[node['name']] = Node(**node)
         for link in links:
             self.links[link['name']] = Link(**link)
+        paths = {path['name']: [[self.links[x] for x in p] for p in path['paths']] for path in paths}
         for demand in demands:
             name = demand['name']
             self.demands[name] = Demand(**demand, paths=paths[name])

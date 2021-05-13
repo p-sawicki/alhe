@@ -38,12 +38,20 @@ class GeneticAlgorithm:
         self.population = [Chromosome(network, singleMode) for _ in range(self.n)]
 
     def run(self) -> None:
-        for _ in range(self.epochs):
+        for i in range(self.epochs):
+            print(f'[i] Running epoch {i}')
+
             # Select new population
-            # TODO:
+            # TODO: Maybe do it wisely
+            row = sorted(self.population, key=lambda x: x.objFunc(), reverse=True)
+            chosenOnes = row[0:len(row) // 2]
 
             # Reproduce the chosen ones
-            # TODO:
+            self.population = []
+            for j in range(len(chosenOnes)):
+                child1, child2 = Chromosome.reproduce(chosenOnes[0], chosenOnes[j])
+                self.population.append(child1)
+                self.population.append(child2)
             assert(len(self.population) == self.n)
 
             # Mutate
@@ -56,6 +64,7 @@ class GeneticAlgorithm:
             )
 
     def result(self) -> None:
+        print(self.costHistory)
         pass
 
 
@@ -65,7 +74,7 @@ def main():
                         help='Path to file describing network model')
     parser.add_argument('--population-size', '-n', default=10,
                         metavar='N', type=int, help='Size of population used by genetic algorithm')
-    parser.add_argument('--epochs', '-t', metavar='N', type=int, default=1000,
+    parser.add_argument('--epochs', '-t', metavar='N', type=int, default=100,
                         help='Number of cycles done before returning result')
     parser.add_argument('--mutation', type=float, default=0.1, help='Mutation factor')
     parser.add_argument('--multi-mode', dest='single_mode', action='store_false',
