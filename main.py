@@ -2,70 +2,9 @@
 
 import argparse
 
-from Chromosome import Chromosome
-from NetworkModel import *
-
-"""
-def init_pop(paths: dict) -> dict:
-    population = {}
-    for name in paths.keys():
-        admissible_paths = paths[name]
-
-        path_choice = [0] * len(admissible_paths)
-        chosen_path = int(random.uniform(0, len(admissible_paths)))
-        path_choice[chosen_path] = 1
-
-        visits = []
-        for _ in admissible_paths[chosen_path]:
-            visits.append(int(random.uniform(0, 5)))
-
-        population[name] = {
-            'path_choice': path_choice,
-            'visits': visits
-        }
-    return population"""
-
-
-class GeneticAlgorithm:
-    def __init__(self, network: NetworkModel, n: int, epochs: int, mutationFactor: int, singleMode: bool):
-        self.network = network
-        self.n = n
-        self.epochs = epochs
-        self.mutationFactor = mutationFactor
-        self.costHistory = []
-
-        # Create initial population
-        self.population = [Chromosome(network, singleMode) for _ in range(self.n)]
-
-    def run(self) -> None:
-        for i in range(self.epochs):
-            print(f'[i] Running epoch {i}')
-
-            # Select new population
-            # TODO: Maybe do it wisely
-            row = sorted(self.population, key=lambda x: x.objFunc(), reverse=True)
-            chosenOnes = row[0:len(row) // 2]
-
-            # Reproduce the chosen ones
-            self.population = []
-            for j in range(len(chosenOnes)):
-                child1, child2 = Chromosome.reproduce(chosenOnes[0], chosenOnes[j])
-                self.population.append(child1)
-                self.population.append(child2)
-            assert(len(self.population) == self.n)
-
-            # Mutate
-            for p in self.population:
-                p.mutate(self.mutationFactor)
-
-            # Save cost of the best member in population
-            self.costHistory.append(
-                min([p.objFunc() for p in self.population])
-            )
-
-    def result(self) -> None:
-        print(self.costHistory)
-        pass
+from src.GeneticAlgorithm import GeneticAlgorithm
+from src.NetworkModel import NetworkModel
+from src.NetworkVisualizer import drawNetworkModel
 
 
 def main():
@@ -86,9 +25,14 @@ def main():
     network.parse()
 
     # Roll the genetic algorithm
-    genetics = GeneticAlgorithm(network, args.population_size, args.epochs, args.mutation, args.single_mode)
-    genetics.run()
-    genetics.result()
+    genetic = GeneticAlgorithm(network, args.population_size, args.epochs, args.mutation, args.single_mode)
+    genetic.run()
+    genetic.result()
+
+    # Draw results
+    drawNetworkModel(network,
+                     genetic.population[0],
+                     title=f'Solution n={args.population_size} t={args.epochs} m={args.mutation}')
 
 
 if __name__ == '__main__':

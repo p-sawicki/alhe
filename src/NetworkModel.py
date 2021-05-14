@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-import FileParser
+import src.FileParser as FileParser
 
 
 class Node:

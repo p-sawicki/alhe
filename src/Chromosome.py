@@ -1,7 +1,7 @@
 import random
 from typing import Dict, List, Tuple
 
-from NetworkModel import NetworkModel
+from src.NetworkModel import NetworkModel
 
 
 class Gene:
@@ -13,22 +13,13 @@ class Gene:
     def __init__(self, name: str, network: NetworkModel, singleMode: bool = True):
         self.name: str = name
         self.path_choices: List[float] = [random.uniform(0, 1)] * network.getDemand(name).pathsCount()
-        self.modules: Dict[str, int] = {name: random.randint(0, 5) for name in network.links}
+        self.modules: Dict[str, int] = {name: random.randint(0, 2) for name in network.links}
         self.singleMode: bool = singleMode
 
         self.normalize()
 
     def __str__(self) -> str:
         return f'Gene({self.name})[paths: {self.path_choices}; modules: {self.modules}]'
-
-    # def __setattr__(self, key, value):
-    #     """
-    #     Invoked on every attribute write. In case of changing the value of
-    #     `path_choices`, invoke _normalize() method
-    #     """
-    #     super().__setattr__(key, value)
-    #     if key == 'path_choices':
-    #         self._normalize()
 
     def normalize(self) -> None:
         """
@@ -80,6 +71,17 @@ class Chromosome:
             for i, path in enumerate(demand.paths):
                 for link in path:
                     links[link.name] += link.module_capacity * gene.modules[link.name]
+        return links
+
+    def modulesPerLink(self) -> Dict[str, int]:
+        """
+        Return the total number of modules installed on each link
+        """
+        links: Dict[str, int] = {link.name: 0 for link in self.network.links.values()}
+        for demand in self.network.demands.values():
+            for path in demand.paths:
+                for link in path:
+                    links[link.name] += self.genes[demand.name].modules[link.name]
         return links
 
     def calcDemands(self) -> Dict[str, float]:
