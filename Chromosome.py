@@ -18,6 +18,9 @@ class Gene:
 
         self.normalize()
 
+    def __str__(self) -> str:
+        return f'Gene({self.name})[paths: {self.path_choices}; modules: {self.modules}]'
+
     # def __setattr__(self, key, value):
     #     """
     #     Invoked on every attribute write. In case of changing the value of
@@ -64,6 +67,9 @@ class Chromosome:
             for demand in network.demands.values()
         }
 
+    def __str__(self) -> str:
+        return f'Chromosome()[objFunc: {self.objFunc()}]'
+
     def totalLinksCapacity(self) -> Dict[str, float]:
         """
         Return the total capacity of each link
@@ -76,18 +82,14 @@ class Chromosome:
                     links[link.name] += link.module_capacity * gene.modules[link.name]
         return links
 
-    def objFunc(self) -> float:
+    def calcDemands(self) -> Dict[str, float]:
         """
-        Calculate the value of objective function which consists of
-         1) checking that demands were met
-         2) minimizing the number of visits
-         3) minimizing the amount of wasted capacity
+        For each link calculate the spare capacity
         """
-        cost = 0.0
         totalLinksCap = self.totalLinksCapacity()
-
-        # 1. check demands
         perLinkDemand: Dict[str, float] = {}
+        perLinkRatio: Dict[str, float] = {}
+
         for demand in self.network.demands.values():
             gene = self.genes[demand.name]
             for i, path in enumerate(demand.paths):
@@ -98,9 +100,25 @@ class Chromosome:
         for name in perLinkDemand:
             expected = perLinkDemand[name]
             current = totalLinksCap[name]
-            if current < expected:
+            perLinkRatio[name] = current - expected
+        return perLinkRatio
+
+    def objFunc(self) -> float:
+        """
+        Calculate the value of objective function which consists of
+         1) checking that demands were met
+         2) minimizing the number of visits
+         3) minimizing the amount of wasted capacity
+        """
+        cost = 0.0
+
+        # 1. check demands
+        perLinkDemand = self.calcDemands()
+        for name in perLinkDemand:
+            diff = perLinkDemand[name]
+            if diff < 0:
                 # TODO: Use maybe more complex function
-                cost += expected - current
+                cost += -diff
 
         # 2. count number of visits
         for gene in self.genes.values():
@@ -133,7 +151,7 @@ class Chromosome:
             p21 = gene2.path_choices[:slicePaths]
             p22 = gene2.path_choices[slicePaths:]
             gene1.path_choices = p11 + p22
-            gene2.path_choices = p12 + p21
+            gene2.path_choices = p21 + p12
 
             sliceModules = random.randint(0, len(gene1.modules))
             linesNames = [n for n in gene1.modules]
