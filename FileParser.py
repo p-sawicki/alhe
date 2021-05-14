@@ -93,15 +93,15 @@ def parse(file_name: str) -> (List[Dict[str, Any]], List[Dict[str, Any]], List[D
             i += 2
             while text[i] != ')':
                 name = text[i]
-                lon = text[i + 2]
-                lat = text[i + 3]
+                lon = float(text[i + 2])
+                lat = float(text[i + 3])
 
                 nodes.append({
                     'name': name,
                     'lon': lon,
                     'lat': lat,
                 })
-                i += 1  # skip link-end close bracket
+                i += 5
         i += 1
 
     return nodes, links, demands, paths
