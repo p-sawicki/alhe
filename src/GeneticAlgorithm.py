@@ -1,3 +1,5 @@
+from typing import List
+
 from src.Chromosome import Chromosome
 from src.NetworkModel import NetworkModel
 
@@ -8,7 +10,7 @@ class GeneticAlgorithm:
         self.n = n
         self.epochs = epochs
         self.mutationFactor = mutationFactor
-        self.costHistory = []
+        self.costHistory: List[float] = []
 
         # Create initial population
         self.population = [Chromosome(network, singleMode) for _ in range(self.n)]
@@ -19,24 +21,20 @@ class GeneticAlgorithm:
 
             # Select new population
             # TODO: Maybe do it wisely
-            row = sorted(self.population, key=lambda x: x.objFunc())
+            row: List[Chromosome] = sorted(self.population, key=lambda x: x.objFunc())
+            self.costHistory.append(row[0].objFunc())
             chosenOnes = row[0:len(row) // 2]
 
             # Reproduce the chosen ones
             self.population = chosenOnes
             for j in range(0, len(chosenOnes)):
                 child1, _ = Chromosome.reproduce(chosenOnes[0], chosenOnes[j])
+
+                # Apply mutation to the newly created child
+                child1.mutate(self.mutationFactor)
+
                 self.population.append(child1)
             assert(len(self.population) == self.n)
-
-            # Mutate
-            for p in self.population:
-                p.mutate(self.mutationFactor)
-
-            # Save cost of the best member in population
-            self.costHistory.append(
-                min([p.objFunc() for p in self.population])
-            )
 
         # Sort final population
         self.population = sorted(self.population, key=lambda x: x.objFunc())

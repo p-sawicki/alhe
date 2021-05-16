@@ -4,7 +4,7 @@ import argparse
 
 from src.GeneticAlgorithm import GeneticAlgorithm
 from src.NetworkModel import NetworkModel
-from src.NetworkVisualizer import drawNetworkModel
+from src.NetworkVisualizer import drawNetworkModel, drawObjFuncGraph
 
 
 def main():
@@ -15,7 +15,7 @@ def main():
                         metavar='N', type=int, help='Size of population used by genetic algorithm')
     parser.add_argument('--epochs', '-t', metavar='N', type=int, default=100,
                         help='Number of cycles done before returning result')
-    parser.add_argument('--mutation', type=float, default=0.1, help='Mutation factor')
+    parser.add_argument('--mutation', '-m',  type=float, default=0.3, help='Mutation factor')
     parser.add_argument('--multi-mode', dest='single_mode', action='store_false',
                         help='Whether to solve problem assuming that network support packets commutation')  # FIXME
     args = parser.parse_args()
@@ -33,7 +33,7 @@ def main():
     drawNetworkModel(network,
                      genetic.population[0],
                      title=f'Solution n={args.population_size} t={args.epochs} m={args.mutation}')
-
+    drawObjFuncGraph(genetic.costHistory)
 
 if __name__ == '__main__':
     main()

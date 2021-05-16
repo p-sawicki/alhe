@@ -13,8 +13,13 @@ class Gene:
     def __init__(self, name: str, network: NetworkModel, singleMode: bool = True):
         self.name: str = name
         self.path_choices: List[float] = [random.uniform(0, 1)] * network.getDemand(name).pathsCount()
-        self.modules: Dict[str, int] = {name: random.randint(0, 2) for name in network.links}
+        self.modules: Dict[str, int] = {name: 0 for name in network.links}
         self.singleMode: bool = singleMode
+
+        # Set a few modules in random places
+        #for _ in range(2):
+        #    randomKey = random.choice(list(self.modules.keys()))
+        #    self.modules[randomKey] += random.randint(0, 1)
 
         self.normalize()
 
@@ -118,9 +123,7 @@ class Chromosome:
         perLinkDemand = self.calcDemands()
         for name in perLinkDemand:
             diff = perLinkDemand[name]
-            if diff < 0:
-                # TODO: Use maybe more complex function
-                cost += -diff
+            cost += abs(diff)
 
         # 2. count number of visits
         for gene in self.genes.values():
@@ -131,8 +134,27 @@ class Chromosome:
 
         return cost
 
-    def mutate(self, mutationFactor: float):
-        pass
+    def mutate(self, mutationFactor: float) -> None:
+        """
+        For each gene in chromosome, apply mutation algorithm with frequency
+        controlled by @mutationFactor argument
+        """
+        for demandName in self.genes:
+            if random.uniform(0, 1) > mutationFactor:
+                continue
+
+            gene = self.genes[demandName]
+
+            # Mutate path_choices
+            choicesVal = random.uniform(0, 1)
+            choicesPos = random.randint(0, len(gene.path_choices) - 1)
+            gene.path_choices[choicesPos] = choicesVal
+            gene.normalize()
+
+            # Mutate modules
+            modulesVal = random.randint(0, 4)
+            modulesPos = random.choice(list(gene.modules.keys()))
+            gene.modules[modulesPos] = modulesVal
 
     @staticmethod
     def reproduce(parent1: 'Chromosome', parent2: 'Chromosome') -> Tuple['Chromosome', 'Chromosome']:

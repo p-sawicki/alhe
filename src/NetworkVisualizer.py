@@ -1,6 +1,6 @@
 import networkx as nx
 from matplotlib import pyplot as plt
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 from src.NetworkModel import NetworkModel
 from src.Chromosome import Chromosome
@@ -22,4 +22,10 @@ def drawNetworkModel(network: NetworkModel, chromosome: 'Chromosome', title: str
     nx.draw(G, pos, with_labels=True)
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edgeLabels, font_color='red')
 
+    plt.show()
+
+
+def drawObjFuncGraph(costHistory: List[float]):
+    plt.plot(costHistory)
+    plt.ylabel('Cost history')
     plt.show()
