@@ -12,14 +12,14 @@ class Gene:
     """
     def __init__(self, name: str, network: NetworkModel, singleMode: bool = True):
         self.name: str = name
-        self.path_choices: List[float] = [random.uniform(0, 1)] * network.getDemand(name).pathsCount()
+        self.path_choices: List[float] = [random.uniform(0, 1) for _ in range(network.getDemand(name).pathsCount())]
         self.modules: Dict[str, int] = {name: 0 for name in network.links}
         self.singleMode: bool = singleMode
 
         # Set a few modules in random places
-        #for _ in range(2):
-        #    randomKey = random.choice(list(self.modules.keys()))
-        #    self.modules[randomKey] += random.randint(0, 1)
+        for _ in range(2):
+            randomKey = random.choice(list(self.modules.keys()))
+            self.modules[randomKey] += random.randint(0, 1)
 
         self.normalize()
 
@@ -30,6 +30,8 @@ class Gene:
         """
         Scale path_choice so that it always sums to 1
         """
+        assert (all([choice >= 0 for choice in self.path_choices]))
+
         m = max(self.path_choices)
         s = sum(self.path_choices)
 
@@ -37,11 +39,18 @@ class Gene:
             self.path_choices = [1 if i == 0 else 0 for i in range(len(self.path_choices))]
             return
 
+        self.path_choices = [c / s for c in self.path_choices]
+
         if self.singleMode:
-            mPos = self.path_choices.index(m)
-            self.path_choices = [1 if i == mPos else 0 for i in range(len(self.path_choices))]
-        else:
-            self.path_choices = [c / s for c in self.path_choices]
+            avgPos = round(
+                sum([
+                    i * choice
+                    for i, choice in enumerate(self.path_choices)
+                ])
+            )
+            assert(0 <= avgPos < len(self.path_choices))
+
+            self.path_choices = [1 if i == avgPos else 0 for i in range(len(self.path_choices))]
 
     def totalVisits(self) -> int:
         """
@@ -123,11 +132,11 @@ class Chromosome:
         perLinkDemand = self.calcDemands()
         for name in perLinkDemand:
             diff = perLinkDemand[name]
-            cost += abs(diff)
+            cost += diff ** 4 if diff < 0 else diff
 
         # 2. count number of visits
         for gene in self.genes.values():
-            cost += gene.totalVisits()
+            cost += gene.totalVisits() * 20
 
         # 3. count wasted network capacity
         # TODO:
