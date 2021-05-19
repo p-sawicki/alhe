@@ -15,6 +15,9 @@ class Node:
     def __str__(self) -> str:
         return f'Node({self.name})[{self.lon}:{self.lat}]'
 
+    def __eq__(self, other) -> bool:
+        return self.name == other.name and self.lon == other.lon and self.lat == other.lat
+
 
 class Link:
     """
@@ -29,6 +32,12 @@ class Link:
 
     def __str__(self) -> str:
         return f'Link({self.name})["{self.source}" -> "{self.target}"]'
+
+    def __eq__(self, other) -> bool:
+        return all([
+            getattr(self, field) == getattr(other, field)
+            for field in ['name', 'source', 'target', 'module_capacity', 'module_cost']
+        ])
 
 
 class Demand:
@@ -45,6 +54,12 @@ class Demand:
 
     def __str__(self) -> str:
         return f'Demand({self.name})["{self.source}" -> "{self.target}"]'
+    
+    def __eq__(self, other) -> bool:
+        return all([
+            getattr(self, field) == getattr(other, field)
+            for field in ['name', 'source', 'target', 'value', 'maxLen', 'paths']
+        ])
 
     def pathsCount(self) -> int:
         return len(self.paths)
