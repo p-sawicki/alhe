@@ -24,3 +24,9 @@ Example usage:
 ./main.py      # Use ./polska.txt model and default genetic alg params
 ./main.py --model polska.txt -n 123 -t 10000
 ```
+
+## Example output
+
+| Graph view | Cost function |
+| -- | -- |
+| ![graph_view](docs/network_modules.png) | ![cost func2](docs/objfunc.png) |
