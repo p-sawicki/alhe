@@ -20,20 +20,23 @@ class GeneticAlgorithm:
             print(f'[i] Running epoch {i}')
 
             # Select new population
-            # TODO: Maybe do it wisely
             row: List[Chromosome] = sorted(self.population, key=lambda x: x.objFunc())
             self.costHistory.append(row[0].objFunc())
             chosenOnes = row[0:len(row) // 2]
+            chosenOnesSize = len(chosenOnes)
 
             # Reproduce the chosen ones
-            self.population = chosenOnes
-            for j in range(0, len(chosenOnes)):
-                child1, _ = Chromosome.reproduce(chosenOnes[0], chosenOnes[j])
+            for a in range(0, chosenOnesSize):
+                for b in range(a + 1, chosenOnesSize):
+                    child1, _ = Chromosome.reproduce(chosenOnes[a], chosenOnes[b])
 
-                # Apply mutation to the newly created child
-                child1.mutate(self.mutationFactor)
+                    # Apply mutation to the newly created child
+                    child1.mutate(self.mutationFactor)
 
-                self.population.append(child1)
+                    chosenOnes.append(child1)
+
+            chosenOnes = sorted(chosenOnes, key=lambda x: x.objFunc())
+            self.population = chosenOnes[:self.n]
             assert(len(self.population) == self.n)
 
         # Sort final population
@@ -42,3 +45,5 @@ class GeneticAlgorithm:
     def result(self) -> None:
         print(self.costHistory)
         print(self.population[0].modulesPerLink())
+        for name, gene in self.population[0].genes.items():
+            print(f'\t{name} - {gene.path_choices}')

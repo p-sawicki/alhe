@@ -22,10 +22,16 @@ def drawNetworkModel(network: NetworkModel, chromosome: 'Chromosome', title: str
     nx.draw(G, pos, with_labels=True)
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edgeLabels, font_color='red')
 
+    # TODO: Display graph title
+    print(title)
+    plt.savefig('network_modules.png')
     plt.show()
 
 
 def drawObjFuncGraph(costHistory: List[float]):
     plt.plot(costHistory)
-    plt.ylabel('Cost history')
+    plt.xlabel('Epoch number')
+    plt.ylabel('Cost')
+    # plt.ylim(0, 1_000_000-1)
+    plt.savefig('objfunc.png')
     plt.show()

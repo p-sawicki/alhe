@@ -1,3 +1,4 @@
+import copy
 import random
 from typing import Dict, List, Tuple
 
@@ -13,13 +14,8 @@ class Gene:
     def __init__(self, name: str, network: NetworkModel, singleMode: bool = True):
         self.name: str = name
         self.path_choices: List[float] = [random.uniform(0, 1) for _ in range(network.getDemand(name).pathsCount())]
-        self.modules: Dict[str, int] = {name: 0 for name in network.links}
+        self.modules: Dict[str, int] = {name: random.randint(0, 2) for name in network.links}
         self.singleMode: bool = singleMode
-
-        # Set a few modules in random places
-        for _ in range(2):
-            randomKey = random.choice(list(self.modules.keys()))
-            self.modules[randomKey] += random.randint(0, 1)
 
         self.normalize()
 
@@ -74,6 +70,16 @@ class Chromosome:
 
     def __str__(self) -> str:
         return f'Chromosome()[objFunc: {self.objFunc()}]'
+
+    def __deepcopy__(self, memo) -> 'Chromosome':
+        """
+        Override default deep-copy mechanism, so that network model is
+        only referenced and not copies as well
+        What could go wrong?
+        """
+        newObj = Chromosome(self.network, self.singleMode)
+        newObj.genes = copy.deepcopy(self.genes)
+        return newObj
 
     def totalLinksCapacity(self) -> Dict[str, float]:
         """
@@ -132,11 +138,15 @@ class Chromosome:
         perLinkDemand = self.calcDemands()
         for name in perLinkDemand:
             diff = perLinkDemand[name]
-            cost += diff ** 4 if diff < 0 else diff
+            if diff < 0:
+                print("Demand is below limit!")
+                cost = 1e10
+            else:
+                cost += diff / 100
 
         # 2. count number of visits
         for gene in self.genes.values():
-            cost += gene.totalVisits() * 20
+            cost += gene.totalVisits() * 1000
 
         # 3. count wasted network capacity
         # TODO:
@@ -161,7 +171,7 @@ class Chromosome:
             gene.normalize()
 
             # Mutate modules
-            modulesVal = random.randint(0, 4)
+            modulesVal = random.randint(0, 2)
             modulesPos = random.choice(list(gene.modules.keys()))
             gene.modules[modulesPos] = modulesVal
 
@@ -171,8 +181,8 @@ class Chromosome:
         Trivial implementation of one point slice. For each gene, randomly select
         slice point for paths_choices and modules count
         """
-        child1 = Chromosome(parent1.network, parent1.singleMode)
-        child2 = Chromosome(parent2.network, parent2.singleMode)
+        child1 = copy.deepcopy(parent1)
+        child2 = copy.deepcopy(parent2)
 
         for demandName in child1.genes:
             gene1 = child1.genes[demandName]
