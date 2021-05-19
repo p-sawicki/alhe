@@ -1,0 +1,53 @@
+?SNDlib native format; type: network; version: 1.0
+# network test model
+
+# NODE SECTION
+#
+# <node_id> [(<longitude>, <latitude>)]
+
+NODES (
+  Gdansk ( 18.60 54.20 )
+  Szczecin ( 14.50 53.40 )
+  Warsaw ( 21.00 52.20 )
+  Wroclaw ( 16.90 51.10 )
+)
+
+# LINK SECTION
+#
+# <link_id> ( <source> <target> ) <pre_installed_capacity> <pre_installed_capacity_cost> <routing_cost> <setup_cost> ( {<module_capacity> <module_cost>}* )
+
+LINKS (
+  Link_0_1 ( Gdansk Warsaw ) 0.00 0.00 0.00 156.00 ( 155.00 156.00 622.00 468.00 )
+  Link_0_2 ( Gdansk Szczecin ) 0.00 0.00 0.00 156.00 ( 155.00 156.00 622.00 468.00 )
+  Link_2_3 ( Szczecin Wroclaw ) 0.00 0.00 0.00 156.00 ( 131.00 156.00 622.00 468.00 )
+  Link_3_1 ( Wroclaw Warsaw ) 0.00 0.00 0.00 156.00 ( 155.00 112.00 622.00 468.00 )
+)
+
+# DEMAND SECTION
+#
+# <demand_id> ( <source> <target> ) <routing_unit> <demand_value> <max_path_length>
+
+DEMANDS (
+  Demand_0_1 ( Gdansk Warsaw ) 1 195.00 UNLIMITED
+  Demand_0_2 ( Gdansk Wroclaw ) 1 158.00 UNLIMITED
+  Demand_0_3 ( Gdansk Szczecin ) 1 174.00 UNLIMITED
+)
+
+# ADMISSIBLE PATHS SECTION
+#
+# <demand_id> ( {<path_id> ( <link_id>+ )}+ )
+
+ADMISSIBLE_PATHS (
+  Demand_0_1 (
+    P_0 ( Link_0_1 )
+    P_1 ( Link_0_2 Link_2_3 Link_3_1 )
+  )
+  Demand_0_2 (
+    P_0 ( Link_0_1 Link_3_1 )
+    P_1 ( Link_0_2 Link_2_3 )
+  )
+  Demand_0_3 (
+    P_0 ( Link_0_2 )
+    P_1 ( Link_0_1 Link_3_1 Link_2_3 )
+  )
+)

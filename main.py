@@ -35,5 +35,6 @@ def main():
                      title=f'Solution n={args.population_size} t={args.epochs} m={args.mutation}')
     drawObjFuncGraph(genetic.costHistory)
 
+
 if __name__ == '__main__':
     main()
