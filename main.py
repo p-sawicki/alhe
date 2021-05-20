@@ -4,7 +4,7 @@ import argparse
 
 from src.GeneticAlgorithm import GeneticAlgorithm
 from src.NetworkModel import NetworkModel
-from src.NetworkVisualizer import drawNetworkModel, drawObjFuncGraph
+from src.NetworkVisualizer import drawNetworkModel, drawObjFuncGraph, drawChangesHistory
 
 
 def main():
@@ -34,6 +34,7 @@ def main():
                      genetic.population[0],
                      title=f'Solution n={args.population_size} t={args.epochs} m={args.mutation}')
     drawObjFuncGraph(genetic.costHistory)
+    drawChangesHistory(genetic.changesHistory)
 
 
 if __name__ == '__main__':

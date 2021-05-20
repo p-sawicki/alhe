@@ -31,8 +31,20 @@ def drawNetworkModel(network: NetworkModel, chromosome: 'Chromosome', title: str
 def drawObjFuncGraph(costHistory: List[float]):
     plt.clf()
     plt.plot(costHistory)
+    plt.title('Value of objective function for each epoch')
     plt.xlabel('Epoch number')
     plt.ylabel('Cost')
-    # plt.ylim(0, 1_000_000-1)
+
     plt.savefig('objfunc.png')
+    plt.show()
+
+
+def drawChangesHistory(changesHistory: List[int]):
+    plt.clf()
+    plt.plot(changesHistory)
+    plt.title('Epochs since last change of objective function')
+    plt.xlabel('Epoch number')
+    plt.ylabel('Epoch since last change')
+
+    plt.savefig('changesHist.png')
     plt.show()

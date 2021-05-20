@@ -10,7 +10,12 @@ class GeneticAlgorithm:
         self.n = n
         self.epochs = epochs
         self.mutationFactor = mutationFactor
+
+        # Used for tracing algorithm progress
         self.costHistory: List[float] = []
+        self.changesHistory: List[int] = []
+        self.lastSamePos = 0
+        self.lastSameVal = 0.0
 
         # Create initial population
         self.population = [Chromosome(network, singleMode) for _ in range(self.n)]
@@ -39,8 +44,21 @@ class GeneticAlgorithm:
             self.population = chosenOnes[:self.n]
             assert(len(self.population) == self.n)
 
+            # Check how we're doing
+            same = self.lenOfSame(i, self.costHistory[-1])
+            self.changesHistory.append(same)
+
         # Sort final population
         self.population = sorted(self.population, key=lambda x: x.objFunc())
+
+    def lenOfSame(self, epoch: int, score: float) -> int:
+        """
+        Returns number of epochs that resulted in the same score
+        """
+        if self.lastSameVal != score:
+            self.lastSameVal = score
+            self.lastSamePos = epoch
+        return epoch - self.lastSamePos
 
     def result(self) -> None:
         print(self.costHistory)
