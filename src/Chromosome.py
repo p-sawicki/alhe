@@ -49,22 +49,20 @@ class Gene:
 
             self.path_choices = [1 if i == avgPos else 0 for i in range(len(self.path_choices))]
 
-    def totalVisits(self) -> int:
-        """
-        Return the number of visits required to setup all used modules
-        """
-        raise NotImplementedError("This function is not valid anymore")
-        s = sum(self.modules.values())
-        return s * 2
-
 
 class Chromosome:
     """
     Chromosome consists of one gene per every demand
     """
-    def __init__(self, network: NetworkModel, singleMode: bool = True):
+    def __init__(self, network: NetworkModel, singleMode: bool = True, _skipGen: bool = False):
         self.network = network
         self.singleMode = singleMode
+
+        if _skipGen:
+            # _skipGen is used by __deepcopy__ to omit generation of initial genes,
+            #  which are going to be overwritten anyway
+            return
+
         self.genes: Dict[str, Gene] = {
             demand.name: Gene(name=demand.name, network=network, singleMode=singleMode)
             for demand in network.demands.values()
@@ -73,13 +71,13 @@ class Chromosome:
     def __str__(self) -> str:
         return f'Chromosome()[objFunc: {self.objFunc()}]'
 
-    def __deepcopy__(self, memo) -> 'Chromosome':
+    def __deepcopy__(self, memo) -> object:
         """
         Override default deep-copy mechanism, so that network model is
-        only referenced and not copies as well
+        only referenced and not copied as well
         What could go wrong?
         """
-        newObj = Chromosome(self.network, self.singleMode)
+        newObj = Chromosome(self.network, self.singleMode, True)
         newObj.genes = copy.deepcopy(self.genes)
         return newObj
 
@@ -100,9 +98,13 @@ class Chromosome:
         """
         links: Dict[str, Union[float, int]] = {link.name: 0.0 for link in self.network.links.values()}
         for demand in self.network.demands.values():
-            for path in demand.paths:
-                for link in path:
-                    links[link.name] += self.genes[demand.name].modules[link.name]
+            gene = self.genes[demand.name]
+            linksVisited = set()
+            for i, path in enumerate(demand.paths):
+                if gene.path_choices[i] > 0.0:
+                    for link in filter(lambda x: x.name not in linksVisited, path):
+                        links[link.name] += gene.modules[link.name]
+                        linksVisited.add(link.name)
 
         for link in links:
             links[link] = math.ceil(links[link])
@@ -142,7 +144,6 @@ class Chromosome:
         for name in perLinkDemand:
             diff = perLinkDemand[name]
             if diff < 0:
-                print("Demand is below limit!")
                 cost = 1e10
             else:
                 cost += diff / 100
@@ -177,6 +178,13 @@ class Chromosome:
             modulesVal = random.uniform(0, 1)
             modulesPos = random.choice(list(gene.modules.keys()))
             gene.modules[modulesPos] = modulesVal
+
+            if random.uniform(0, 1) > mutationFactor:
+                continue
+
+            # Add random zero to chromosome
+            modulesPos = random.choice(list(gene.modules.keys()))
+            gene.modules[modulesPos] = 0.0
 
     @staticmethod
     def reproduce(parent1: 'Chromosome', parent2: 'Chromosome') -> Tuple['Chromosome', 'Chromosome']:
