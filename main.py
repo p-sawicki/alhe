@@ -15,7 +15,7 @@ def main():
                         metavar='N', type=int, help='Size of population used by genetic algorithm')
     parser.add_argument('--epochs', '-t', metavar='N', type=int, default=100,
                         help='Number of cycles done before returning result')
-    parser.add_argument('--mutation', '-m',  type=float, default=0.3, help='Mutation factor')
+    parser.add_argument('--mutation', '-m', metavar='M', type=float, default=0.3, help='Mutation factor')
     parser.add_argument('--multi-mode', dest='single_mode', action='store_false',
                         help='Whether to solve problem assuming that network support packets commutation')  # FIXME
     args = parser.parse_args()

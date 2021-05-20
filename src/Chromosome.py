@@ -1,6 +1,7 @@
 import copy
+import math
 import random
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional, Union
 
 from src.NetworkModel import NetworkModel
 
@@ -14,7 +15,7 @@ class Gene:
     def __init__(self, name: str, network: NetworkModel, singleMode: bool = True):
         self.name: str = name
         self.path_choices: List[float] = [random.uniform(0, 1) for _ in range(network.getDemand(name).pathsCount())]
-        self.modules: Dict[str, int] = {name: random.randint(0, 2) for name in network.links}
+        self.modules: Dict[str, float] = {name: random.uniform(0, 1) for name in network.links}
         self.singleMode: bool = singleMode
 
         self.normalize()
@@ -52,6 +53,7 @@ class Gene:
         """
         Return the number of visits required to setup all used modules
         """
+        raise NotImplementedError("This function is not valid anymore")
         s = sum(self.modules.values())
         return s * 2
 
@@ -81,27 +83,29 @@ class Chromosome:
         newObj.genes = copy.deepcopy(self.genes)
         return newObj
 
-    def totalLinksCapacity(self) -> Dict[str, float]:
+    def totalLinksCapacity(self, modsPerLink: Optional[Dict[str, float]] = None) -> Dict[str, float]:
         """
         Return the total capacity of each link
         """
-        links: Dict[str, float] = {link.name: 0.0 for link in self.network.links.values()}
-        for demand in self.network.demands.values():
-            gene = self.genes[demand.name]
-            for i, path in enumerate(demand.paths):
-                for link in path:
-                    links[link.name] += link.module_capacity * gene.modules[link.name]
-        return links
+        if modsPerLink is None:
+            modsPerLink = self.modulesPerLink()
+
+        for link in self.network.links.values():
+            modsPerLink[link.name] *= link.module_capacity
+        return modsPerLink
 
     def modulesPerLink(self) -> Dict[str, int]:
         """
         Return the total number of modules installed on each link
         """
-        links: Dict[str, int] = {link.name: 0 for link in self.network.links.values()}
+        links: Dict[str, Union[float, int]] = {link.name: 0.0 for link in self.network.links.values()}
         for demand in self.network.demands.values():
             for path in demand.paths:
                 for link in path:
                     links[link.name] += self.genes[demand.name].modules[link.name]
+
+        for link in links:
+            links[link] = math.ceil(links[link])
         return links
 
     def calcDemands(self) -> Dict[str, float]:
@@ -109,15 +113,14 @@ class Chromosome:
         For each link calculate the spare capacity
         """
         totalLinksCap = self.totalLinksCapacity()
-        perLinkDemand: Dict[str, float] = {}
+        perLinkDemand: Dict[str, float] = {name: 0.0 for name in self.network.links}
         perLinkRatio: Dict[str, float] = {}
 
         for demand in self.network.demands.values():
             gene = self.genes[demand.name]
             for i, path in enumerate(demand.paths):
                 for link in path:
-                    perLinkDemand[link.name] = perLinkDemand.get(link.name, 0.0) \
-                                               + demand.value * gene.path_choices[i]
+                    perLinkDemand[link.name] += demand.value * gene.path_choices[i]
 
         for name in perLinkDemand:
             expected = perLinkDemand[name]
@@ -145,8 +148,8 @@ class Chromosome:
                 cost += diff / 100
 
         # 2. count number of visits
-        for gene in self.genes.values():
-            cost += gene.totalVisits() * 1000
+        totalVisits = sum(self.modulesPerLink().values())
+        cost += totalVisits * 10
 
         # 3. count wasted network capacity
         # TODO:
@@ -171,7 +174,7 @@ class Chromosome:
             gene.normalize()
 
             # Mutate modules
-            modulesVal = random.randint(0, 2)
+            modulesVal = random.uniform(0, 1)
             modulesPos = random.choice(list(gene.modules.keys()))
             gene.modules[modulesPos] = modulesVal
 

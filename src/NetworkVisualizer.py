@@ -29,6 +29,7 @@ def drawNetworkModel(network: NetworkModel, chromosome: 'Chromosome', title: str
 
 
 def drawObjFuncGraph(costHistory: List[float]):
+    plt.clf()
     plt.plot(costHistory)
     plt.xlabel('Epoch number')
     plt.ylabel('Cost')
