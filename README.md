@@ -4,7 +4,8 @@ This repository contains the implementation of evolutionary algorithm solving ne
 ## Usage
 
 ```txt
-usage: main.py [-h] [--model FILE] [--population-size N] [--epochs N] [--mutation MUTATION] [--multi-mode]
+usage: main.py [-h] [--model FILE] [--population-size N] [--epochs N] [--mutation M] [--multi-mode]
+               [--output DIR] [--hide-plots]
 
 Solve network design problems using genetic algorithm
 
@@ -15,8 +16,10 @@ optional arguments:
   --population-size N, -n N
                         Size of population used by genetic algorithm
   --epochs N, -t N      Number of cycles done before returning result
-  --mutation MUTATION   Mutation factor
+  --mutation M, -m M    Mutation factor
   --multi-mode          Whether to solve problem assuming that network support packets commutation
+  --output DIR          Name of directory to which results will be saved
+  --hide-plots          Whether to display plots after final cycle of genetic algorithm
 ```
 
 Example usage:
