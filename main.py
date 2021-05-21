@@ -14,13 +14,17 @@ def main():
                         help='Size of population used by genetic algorithm')
     parser.add_argument('--epochs', '-t', metavar='N', type=int, default=100,
                         help='Number of cycles done before returning result')
-    parser.add_argument('--mutation', '-m', metavar='M', type=float, default=0.3, help='Mutation factor')
+    parser.add_argument('--mutation', '-m', metavar='R', type=float, default=0.3, help='Mutation factor')
+    parser.add_argument('--xover', '-x', metavar='R', type=float, default=0.5, help='Crossover chance')
+    parser.add_argument('--selection', '-sel', metavar='TYPE', type=str, default='exp', help='Selection type (rand / exp)')
+    parser.add_argument('--succession', '-succ', metavar='TYPE', type=str, default='best', help='Succession type (best / tourny)')
     parser.add_argument('--multi-mode', dest='single_mode', action='store_false',
                         help='Whether to solve problem assuming that network support packets commutation')  # FIXME
     parser.add_argument('--output', metavar='DIR', dest='output_dir', type=str, default='output',
                         help='Name of directory to which results will be saved')
     parser.add_argument('--hide-plots', dest='show_plots', action='store_false',
                         help='Whether to display plots after final cycle of genetic algorithm')
+    parser.add_argument('--quiet', '-q', dest='quiet', action='store_true', help='Run without printing anything')
     args = parser.parse_args()
 
     # Setup network model
@@ -28,14 +32,19 @@ def main():
     network.parse()
 
     # Roll the genetic algorithm
-    genetic = GeneticAlgorithm(network, args.population_size, args.epochs, args.mutation, args.single_mode)
-    genetic.run()
+    genetic = GeneticAlgorithm(network, args.population_size, args.epochs, args.mutation, args.single_mode,
+        args.xover, args.selection, args.succession)
+    genetic.run(args.quiet)
+
+    if not args.quiet:
+        genetic.result()
 
     # Draw results
     visualizer = NetworkVisualizer(args.output_dir, args.show_plots)
     genetic.result(visualizer)
 
-    print('[i] Finished!')
+    if not args.quiet:
+        print('[i] Finished!')
 
 
 if __name__ == '__main__':
