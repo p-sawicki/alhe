@@ -1,4 +1,6 @@
 from typing import Dict, List
+import random
+import math
 
 from src.Chromosome import Chromosome
 from src.NetworkModel import NetworkModel
@@ -6,12 +8,15 @@ from src.NetworkVisualizer import NetworkVisualizer
 
 
 class GeneticAlgorithm:
-    def __init__(self, network: NetworkModel, n: int, epochs: int, mutationFactor: int, singleMode: bool):
+    def __init__(self, network: NetworkModel, n: int, epochs: int, mutationFactor: int, singleMode: bool, xoverChance: float, selection: str, succession: str):
         self.network = network
         self.n = n
         self.epochs = epochs
         self.mutationFactor = mutationFactor
         self.singleMode = singleMode
+        self.xoverChance = xoverChance
+        self.selection = selection
+        self.succession = succession
 
         # Used for tracing algorithm progress
         self.costHistory: List[float] = []
@@ -22,29 +27,69 @@ class GeneticAlgorithm:
         # Create initial population
         self.population = [Chromosome(network, singleMode) for _ in range(self.n)]
 
-    def run(self) -> None:
+    def run(self, quiet : bool) -> float:
         for i in range(self.epochs):
-            print(f'[i] Running epoch {i}')
+            if not quiet:
+                print(f'[i] Running epoch {i}')
 
             # Select new population
             row: List[Chromosome] = sorted(self.population, key=lambda x: x.objFunc())
             self.costHistory.append(row[0].objFunc())
-            chosenOnes = row[0:len(row) // 2]
+
+            # Best one continues unmodified
+            bestChrom = row[0]
+
+            xoverMask = []
+            xovers = 0
+            for i in range(self.n - 1):
+                if random.uniform(0, 1) > self.xoverChance:
+                    xoverMask.append(0)
+                else:
+                    xoverMask.append(1)
+                    xovers += 1
+            onlyMutate = self.n - 1 - xovers
+            
+            samples = onlyMutate + xovers * 2
+            if self.selection == 'rand':
+                chosenOnes = random.choices(row, k=samples)
+            elif self.selection == 'exp':
+                weights = [math.exp(-x) for x in range(self.n)]
+                chosenOnes = random.choices(row, weights, k=samples)
+
             chosenOnesSize = len(chosenOnes)
+            children: List[Chromosome] = []
 
-            # Reproduce the chosen ones
-            for a in range(0, chosenOnesSize):
-                for b in range(a + 1, chosenOnesSize):
-                    child1, _ = Chromosome.reproduce(chosenOnes[a], chosenOnes[b])
+            # Crossover
+            for idx in range(xovers):
+                firstParent = idx * 2
+                secondParent = firstParent + 1
 
-                    # Apply mutation to the newly created child
-                    child1.mutate(self.mutationFactor)
+                child1, _ = Chromosome.reproduce(chosenOnes[firstParent], chosenOnes[secondParent])
+                children.append(child1)
 
-                    chosenOnes.append(child1)
+            for child in range(xovers, chosenOnesSize):
+                children.append(chosenOnes[child])
 
-            chosenOnes = sorted(chosenOnes, key=lambda x: x.objFunc())
-            self.population = chosenOnes[:self.n]
-            assert (len(self.population) == self.n)
+            # Mutation
+            for child in children:
+                child.mutate(self.mutationFactor)
+
+            # Succession
+            if self.succession == 'best':
+                combined : list[Chromosome] = row[1:] + children
+                combined = sorted(combined, key=lambda x: x.objFunc())
+
+                self.population = [bestChrom] + combined[:self.n - 1]
+            elif self.succession == 'tourny':
+                self.population = [bestChrom]
+
+                for idx in range(self.n - 1):
+                    if row[idx + 1].objFunc() <= children[idx].objFunc():
+                        self.population.append(row[idx + 1])
+                    else:
+                        self.population.append(children[idx])
+
+            assert(len(self.population) == self.n)
 
             # Check how we're doing
             same = self.lenOfSame(i, self.costHistory[-1])
@@ -52,6 +97,7 @@ class GeneticAlgorithm:
 
         # Sort final population
         self.population = sorted(self.population, key=lambda x: x.objFunc())
+        return self.population[0].objFunc()
 
     def lenOfSame(self, epoch: int, score: float) -> int:
         """
