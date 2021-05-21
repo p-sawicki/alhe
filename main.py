@@ -30,15 +30,12 @@ def main():
     # Roll the genetic algorithm
     genetic = GeneticAlgorithm(network, args.population_size, args.epochs, args.mutation, args.single_mode)
     genetic.run()
-    genetic.result()
 
     # Draw results
     visualizer = NetworkVisualizer(args.output_dir, args.show_plots)
-    visualizer.drawNetworkModel(network,
-                                genetic.population[0],
-                                title=f'Solution n={args.population_size} t={args.epochs} m={args.mutation}')
-    visualizer.drawObjFuncGraph(genetic.costHistory)
-    visualizer.drawChangesHistory(genetic.changesHistory)
+    genetic.result(visualizer)
+
+    print('[i] Finished!')
 
 
 if __name__ == '__main__':

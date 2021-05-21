@@ -1,7 +1,8 @@
-from typing import List
+from typing import Dict, List
 
 from src.Chromosome import Chromosome
 from src.NetworkModel import NetworkModel
+from src.NetworkVisualizer import NetworkVisualizer
 
 
 class GeneticAlgorithm:
@@ -10,6 +11,7 @@ class GeneticAlgorithm:
         self.n = n
         self.epochs = epochs
         self.mutationFactor = mutationFactor
+        self.singleMode = singleMode
 
         # Used for tracing algorithm progress
         self.costHistory: List[float] = []
@@ -42,7 +44,7 @@ class GeneticAlgorithm:
 
             chosenOnes = sorted(chosenOnes, key=lambda x: x.objFunc())
             self.population = chosenOnes[:self.n]
-            assert(len(self.population) == self.n)
+            assert (len(self.population) == self.n)
 
             # Check how we're doing
             same = self.lenOfSame(i, self.costHistory[-1])
@@ -60,8 +62,68 @@ class GeneticAlgorithm:
             self.lastSamePos = epoch
         return epoch - self.lastSamePos
 
-    def result(self) -> None:
-        print(self.costHistory)
-        print(self.population[0].modulesPerLink())
-        for name, gene in self.population[0].genes.items():
-            print(f'\t{name} - {gene.path_choices}')
+    def result(self, visualizer: NetworkVisualizer) -> None:
+        """
+        Output a lot of useful information to .csv files
+        Also, take care of drawing mathplotlib graphs
+        :param visualizer: reference to NetworkVisualizer class
+        :return: None
+        """
+        visualizer.drawNetworkModel(self.network, self.population[0])
+        visualizer.drawObjFuncGraph(self.costHistory)
+        visualizer.drawChangesHistory(self.changesHistory)
+
+        visualizer.outputCSV('cost_history.csv',
+                             ['Epoch', 'Value'],
+                             [[i, val] for i, val in enumerate(self.costHistory)]
+                             )
+
+        bestResult = self.population[0]
+        linksNames = [link for link in self.network.links]
+        modules = bestResult.modulesPerLink()
+        visualizer.outputCSV('modules_per_link.csv',
+                             ['Link name', 'Modules installed'],
+                             [[name, modules[name]] for name in linksNames]
+                             )
+
+        demandsNames = [demand for demand in self.network.demands]
+        visualizer.outputCSV('path_choices.csv',
+                             ['Demand name'] + [f'Path_{i}' for i in range(10)],
+                             [[name] + bestResult.genes[name].path_choices for name in demandsNames]
+                             )
+
+        visualizer.outputCSV('modules_per_link_per_demand.csv',
+                             ['Demand name'] + [name for name in linksNames],
+                             [
+                                 [name] +
+                                 [str(bestResult.genes[name].modules[linkName]) for linkName in linksNames]
+                                 for name in demandsNames
+                             ])
+
+        if self.singleMode:
+            paths: Dict[str, List[str]] = {}
+            for name in demandsNames:
+                pathNo = bestResult.genes[name].path_choices.index(1)
+                paths[name] = [link.name for link in self.network.getDemand(name).paths[pathNo]]
+
+            visualizer.outputCSV('links_per_demand.csv',
+                                 ['Demand name'] + [f'Link_{i}' for i in range(8)],
+                                 [[name] + paths[name] for name in demandsNames]
+                                 )
+        else:
+            visualizer.outputCSV('link_per_demand.csv',
+                                 ['Demand name', 0], [['Not applicable...', 0]])
+
+        visualizer.outputCSV('summary.csv',
+                             ['Parameter', 'Value'],
+                             [
+                                 ['Epochs count', self.epochs],
+                                 ['Population size', self.n],
+                                 ['Mutation factor', self.mutationFactor],
+                                 ['Single mode', self.singleMode],
+                                 ['Network size (nodes)', len(self.network.nodes)],
+                                 ['Network size (links)', len(self.network.links)],
+                                 ['Network size (demands)', len(self.network.demands)],
+                                 ['Best score', bestResult.objFunc()]
+                             ]
+                             )

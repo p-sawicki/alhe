@@ -100,11 +100,16 @@ class Chromosome:
         for demand in self.network.demands.values():
             gene = self.genes[demand.name]
             linksVisited = set()
+
             for i, path in enumerate(demand.paths):
-                if gene.path_choices[i] > 0.0:
-                    for link in filter(lambda x: x.name not in linksVisited, path):
-                        links[link.name] += gene.modules[link.name]
-                        linksVisited.add(link.name)
+                if gene.path_choices[i] <= 0.0:
+                    continue
+
+                for link in path:
+                    if link.name in linksVisited:
+                        continue
+                    links[link.name] += gene.modules[link.name]
+                    linksVisited.add(link.name)
 
         for link in links:
             links[link] = math.ceil(links[link])
@@ -168,16 +173,19 @@ class Chromosome:
 
             gene = self.genes[demandName]
 
+            # Mutate modules
+            modulesVal = random.uniform(0, 1)
+            modulesPos = random.choice(list(gene.modules.keys()))
+            gene.modules[modulesPos] = modulesVal
+
+            if random.uniform(0, 1) > mutationFactor:
+                continue
+
             # Mutate path_choices
             choicesVal = random.uniform(0, 1)
             choicesPos = random.randint(0, len(gene.path_choices) - 1)
             gene.path_choices[choicesPos] = choicesVal
             gene.normalize()
-
-            # Mutate modules
-            modulesVal = random.uniform(0, 1)
-            modulesPos = random.choice(list(gene.modules.keys()))
-            gene.modules[modulesPos] = modulesVal
 
             if random.uniform(0, 1) > mutationFactor:
                 continue

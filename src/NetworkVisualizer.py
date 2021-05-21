@@ -21,7 +21,7 @@ class NetworkVisualizer:
         if self.showPlots:
             plt.show()
 
-    def drawNetworkModel(self, network: NetworkModel, chromosome: 'Chromosome', title: str):
+    def drawNetworkModel(self, network: NetworkModel, chromosome: 'Chromosome'):
         G = nx.Graph()
         edgeLabels: Dict[Tuple[str, str], int] = {}
         modsPerLink = chromosome.modulesPerLink()
@@ -37,7 +37,6 @@ class NetworkVisualizer:
         nx.draw(G, pos, with_labels=True)
         nx.draw_networkx_edge_labels(G, pos, edge_labels=edgeLabels, font_color='red')
 
-        plt.title(title)
         plt.savefig(self.getPath('network_modules.png'))
         self.displayPlot()
 
@@ -77,3 +76,13 @@ class NetworkVisualizer:
         plt.title(title)
         plt.savefig(self.getPath(outName))
         self.displayPlot()
+
+    def outputCSV(self, name: str, columnLabels: List[str], dataSet: List[List[Any]]):
+        with open(self.getPath(name), 'w') as f:
+            f.write(','.join(columnLabels))
+            f.write('\n')
+
+            for line in dataSet:
+                f.write(','.join(map(str, line)))
+                f.write('\n')
+            f.write('\n')
