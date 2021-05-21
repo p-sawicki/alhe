@@ -100,6 +100,12 @@ class GeneticAlgorithm:
                                  for name in demandsNames
                              ])
 
+        demandsDiff = bestResult.calcDemands()
+        visualizer.outputCSV('demand_diff_per_link.csv',
+                             ['Link name', 'Demand diff'],
+                             [[name, demandsDiff[name]] for name in linksNames]
+                             )
+
         if self.singleMode:
             paths: Dict[str, List[str]] = {}
             for name in demandsNames:
