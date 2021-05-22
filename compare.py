@@ -51,7 +51,7 @@ def main():
     params = {}
     for i in range(args.configs):
         try:
-            pop = random.randint(10, 1000) # population
+            pop = random.randint(1, 25) # population
             mut = random.uniform(0, 1) # mutation factor
             x = random.uniform(0, 1) # crossover chance
             sel = selection[random.randint(0, len(selection) - 1)] # selection mode
