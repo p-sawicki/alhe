@@ -1,6 +1,7 @@
-from typing import Dict, List
-import random
+import copy
 import math
+import random
+from typing import Dict, List
 
 from src.Chromosome import Chromosome
 from src.NetworkModel import NetworkModel
@@ -38,7 +39,7 @@ class GeneticAlgorithm:
             self.costHistory.append(row[0].objFunc())
 
             # Best one continues unmodified
-            bestChrom = row[0]
+            bestChrom = copy.deepcopy(row[0])
 
             xoverMask = []
             xovers = 0
@@ -91,6 +92,8 @@ class GeneticAlgorithm:
                         self.population.append(row[idx + 1])
                     else:
                         self.population.append(children[idx])
+            else:
+                raise ValueError('Invalid succession mode, expected: best or tourny')
 
             assert (len(self.population) == self.n)
 
