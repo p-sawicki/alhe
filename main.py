@@ -41,6 +41,7 @@ def main():
     if not args.quiet:
         visualizer = NetworkVisualizer(args.output_dir, args.show_plots)
         genetic.result(visualizer)
+        visualizer.showWindow()
         print('[i] Finished!')
 
 
