@@ -5,8 +5,6 @@
 """
 from typing import Any, Dict, List, Tuple
 
-import lxml.etree
-
 
 def parse(file_name: str) -> (List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]):
     """
@@ -114,7 +112,11 @@ def loadSolution(file_name: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     can be found on SNDlib home page.
     Return the number of modules added to each link and routing for each demand
     """
-    from lxml import etree as et
+    try:
+        from lxml import etree as et
+    except ImportError:
+        print("[-] Failed to load solution - lxml module is not installed !!!")
+        raise   # Hard to say what should be returned in such case - raise exception anyway
 
     linksModules = {}
     demandsFlows = {}
@@ -164,7 +166,11 @@ def saveSolution(fileName: str, linksModules: Dict[str, Any], demandsFlows: Dict
     demandsFlows must be of form:
         {'Demand_0_1': (127.0, ['Link_1', 'Link_2', ...]), ...}
     """
-    from lxml import etree as et
+    try:
+        from lxml import etree as et
+    except ImportError:
+        print("[-] Failed to save solution - lxml module is not installed !!!")
+        return
 
     root = et.Element("solution")
     root.attrib['xmlns'] = 'http://sndlib.zib.de/solution'
@@ -213,5 +219,5 @@ def saveSolution(fileName: str, linksModules: Dict[str, Any], demandsFlows: Dict
         demandRoutings.append(demandRouting)
     root.append(demandRoutings)
 
-    et = lxml.etree.ElementTree(root)
+    et = et.ElementTree(root)
     et.write(fileName, pretty_print=True, xml_declaration=True, encoding='UTF-8')
