@@ -81,18 +81,18 @@ class Chromosome:
         newObj.genes = copy.deepcopy(self.genes)
         return newObj
 
-    def totalLinksCapacity(self, modsPerLink: Optional[Dict[str, float]] = None) -> Dict[str, float]:
+    def totalLinksCapacity(self, modsPerLink: Optional[Dict[str, float]] = None, ceil: bool = True) -> Dict[str, float]:
         """
         Return the total capacity of each link
         """
         if modsPerLink is None:
-            modsPerLink = self.modulesPerLink()
+            modsPerLink = self.modulesPerLink(ceil)
 
         for link in self.network.links.values():
             modsPerLink[link.name] *= link.module_capacity
         return modsPerLink
 
-    def modulesPerLink(self) -> Dict[str, int]:
+    def modulesPerLink(self, ceil: bool = True) -> Dict[str, int]:
         """
         Return the total number of modules installed on each link
         """
@@ -111,15 +111,31 @@ class Chromosome:
                     links[link.name] += gene.modules[link.name]
                     linksVisited.add(link.name)
 
-        for link in links:
-            links[link] = math.ceil(links[link])
+        if ceil:
+            for link in links:
+                links[link] = math.ceil(links[link])
         return links
 
-    def calcDemands(self) -> Dict[str, float]:
+    def fixedModulesPerLink(self) -> Dict[str, int]:
+        """
+        Return the total number of modules for each link with extra
+        modules added to meet demands
+        """
+        modules = self.modulesPerLink()
+
+        perLinkDemand = self.calcDemands()
+        for name in perLinkDemand:
+            diff = perLinkDemand[name]
+            if diff < 0:
+                linkCap = self.network.links[name].module_capacity
+                modules[name] += math.ceil(-diff / linkCap)
+        return modules
+
+    def calcDemands(self, ceil: bool = True) -> Dict[str, float]:
         """
         For each link calculate the spare capacity
         """
-        totalLinksCap = self.totalLinksCapacity()
+        totalLinksCap = self.totalLinksCapacity(ceil=ceil)
         perLinkDemand: Dict[str, float] = {name: 0.0 for name in self.network.links}
         perLinkRatio: Dict[str, float] = {}
 
@@ -143,18 +159,21 @@ class Chromosome:
          3) minimizing the amount of wasted capacity
         """
         cost = 0.0
+        extraModules: Dict[str, int] = {name: 0 for name in self.network.links}
 
         # 1. check demands
-        perLinkDemand = self.calcDemands()
+        perLinkDemand = self.calcDemands(ceil=False)
         for name in perLinkDemand:
             diff = perLinkDemand[name]
             if diff < 0:
-                cost = 1e10
+                linkCap = self.network.links[name].module_capacity
+                extraModules[name] = math.ceil(-diff / linkCap)
+                cost += (-diff + extraModules[name] * linkCap) / 75
             else:
                 cost += diff / 100
 
         # 2. count number of visits
-        totalVisits = sum(self.modulesPerLink().values())
+        totalVisits = sum(self.modulesPerLink().values()) + sum(extraModules.values())
         cost += totalVisits * 10
 
         # 3. count wasted network capacity

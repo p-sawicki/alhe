@@ -182,6 +182,7 @@ class GeneticAlgorithm:
                                  ['Network size (nodes)', len(self.network.nodes)],
                                  ['Network size (links)', len(self.network.links)],
                                  ['Network size (demands)', len(self.network.demands)],
-                                 ['Best score', bestResult.objFunc()]
+                                 ['Best score', bestResult.objFunc()],
+                                 ['Total modules used', sum(bestResult.fixedModulesPerLink().values())]
                              ]
                              )

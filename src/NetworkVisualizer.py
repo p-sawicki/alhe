@@ -28,7 +28,7 @@ class NetworkVisualizer:
 
         G = nx.Graph()
         edgeLabels: Dict[Tuple[str, str], int] = {}
-        modsPerLink = chromosome.modulesPerLink()
+        modsPerLink = chromosome.fixedModulesPerLink()
 
         for name, node in network.nodes.items():
             G.add_node(name, pos=(node.lon - 14, node.lat - 50))
