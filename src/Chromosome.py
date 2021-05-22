@@ -57,9 +57,10 @@ class Chromosome:
     Chromosome consists of one gene per every demand
     """
 
-    def __init__(self, network: NetworkModel, singleMode: bool = True, _skipGen: bool = False):
+    def __init__(self, network: NetworkModel, singleMode: bool = True, _skipGen: bool = False, k: int = 1):
         self.network = network
         self.singleMode = singleMode
+        self.k = k
 
         if _skipGen:
             # _skipGen is used by __deepcopy__ to omit generation of initial genes,
@@ -80,7 +81,7 @@ class Chromosome:
         only referenced and not copied as well
         What could go wrong?
         """
-        newObj = Chromosome(self.network, self.singleMode, True)
+        newObj = Chromosome(self.network, self.singleMode, True, self.k)
         newObj.genes = copy.deepcopy(self.genes)
         return newObj
 
@@ -205,7 +206,14 @@ class Chromosome:
         cost += totalVisits * 10
 
         # 3. count wasted network capacity
-        # TODO:
+        finalModulesCount = self.fixedModulesPerLink()
+        for linkName in finalModulesCount:
+            cap = finalModulesCount[linkName] * self.network.links[linkName].module_capacity
+            div = math.ceil(cap / self.k)
+            wasted = div * self.k - cap
+            cost += wasted / 10
+
+            assert (self.k != 1 or wasted == 0)  # For k == 1 wasted should be always 0
 
         return cost
 

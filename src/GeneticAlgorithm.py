@@ -11,7 +11,7 @@ from src.NetworkVisualizer import NetworkVisualizer
 
 class GeneticAlgorithm:
     def __init__(self, network: NetworkModel, n: int, epochs: int, mutationFactor: int, singleMode: bool,
-                 xoverChance: float, selection: str, succession: str):
+                 xoverChance: float, selection: str, succession: str, modularity: int):
         self.network = network
         self.n = n
         self.epochs = epochs
@@ -20,6 +20,7 @@ class GeneticAlgorithm:
         self.xoverChance = xoverChance
         self.selection = selection
         self.succession = succession
+        self.modularity = modularity
 
         # Used for tracing algorithm progress
         self.costHistory: List[float] = []
@@ -28,7 +29,7 @@ class GeneticAlgorithm:
         self.lastSameVal = 0.0
 
         # Create initial population
-        self.population = [Chromosome(network, singleMode) for _ in range(self.n)]
+        self.population = [Chromosome(network, singleMode, k=modularity) for _ in range(self.n)]
 
     def run(self, quiet: bool) -> float:
         for i in range(self.epochs):
@@ -185,6 +186,7 @@ class GeneticAlgorithm:
                                  ['Population size', self.n],
                                  ['Mutation factor', self.mutationFactor],
                                  ['Single mode', self.singleMode],
+                                 ['Modularity factor', self.modularity],
                                  ['Network size (nodes)', len(self.network.nodes)],
                                  ['Network size (links)', len(self.network.links)],
                                  ['Network size (demands)', len(self.network.demands)],

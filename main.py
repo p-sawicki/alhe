@@ -20,6 +20,8 @@ def main():
                         help='Selection type (rand / exp)')
     parser.add_argument('--succession', '-succ', metavar='TYPE', type=str, default='best', choices=['best', 'tourny'],
                         help='Succession type (best / tourny)')
+    parser.add_argument('--modularity', '-mod', metavar='K', type=int, default=1,
+                        help='Modularity of links')
     parser.add_argument('--multi-mode', dest='single_mode', action='store_false',
                         help='Whether to solve problem assuming that network support packets commutation')  # FIXME
     parser.add_argument('--output', metavar='DIR', dest='output_dir', type=str, default='output',
@@ -35,7 +37,7 @@ def main():
 
     # Roll the genetic algorithm
     genetic = GeneticAlgorithm(network, args.population_size, args.epochs, args.mutation, args.single_mode,
-                               args.xover, args.selection, args.succession)
+                               args.xover, args.selection, args.succession, args.modularity)
     genetic.run(args.quiet)
 
     if not args.quiet:

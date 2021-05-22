@@ -26,8 +26,8 @@ Solver can be started using `main.py` script. Run with `--help` flag to list all
 
 ```txt
 usage: main.py [-h] [--model FILE] [--population-size N] [--epochs N] [--mutation R] [--xover R]
-               [--selection TYPE] [--succession TYPE] [--multi-mode] [--output DIR] [--hide-plots]
-               [--quiet]
+               [--selection TYPE] [--succession TYPE] [--modularity K] [--multi-mode] [--output DIR]
+               [--hide-plots] [--quiet]
 
 Solve network design problems using genetic algorithm
 
@@ -44,6 +44,8 @@ optional arguments:
                         Selection type (rand / exp)
   --succession TYPE, -succ TYPE
                         Succession type (best / tourny)
+  --modularity K, -mod K
+                        Modularity of links
   --multi-mode          Whether to solve problem assuming that network support packets commutation
   --output DIR          Name of directory to which results will be saved
   --hide-plots          Whether to display plots after final cycle of genetic algorithm
