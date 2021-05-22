@@ -47,3 +47,65 @@ class TestReproductionSingleMode(TestChromosome):
                 len(gene.path_choices),
                 self.network.getDemand(gene.name).pathsCount()
             )
+
+
+class TestObjFunc(TestChromosome):
+    def setUp(self):
+        super().setUp()
+        self.chromosome = Chromosome(self.network, singleMode=True)
+
+    def test_modules_count_ceil(self):
+        self.assertDictEqual(
+            self.chromosome.modulesPerLink(),
+            {'Link_0_1': 0.0, 'Link_0_2': 2.0,
+             'Link_2_3': 2.0, 'Link_3_1': 1.0}
+        )
+
+    def test_modules_count_without_ceil(self):
+        self.assertDictEqual(
+            self.chromosome.modulesPerLink(ceil=False),
+            {
+                'Link_0_1': 0.0,
+                'Link_0_2': 1.5710835338674305,
+                'Link_2_3': 1.3138313299610425,
+                'Link_3_1': 0.445120740777845
+            }
+        )
+
+    def test_fixed_modules_count(self):
+        self.assertDictEqual(
+            self.chromosome.fixedModulesPerLink(),
+            {
+                'Link_0_1': 0.0, 'Link_0_2': 2.0,
+                'Link_2_3': 2.0, 'Link_3_1': 1.0
+            }
+        )
+
+    def test_obj_demands_diff_ceil(self):
+        self.assertDictEqual(
+            self.chromosome.calcDemands(ceil=True),
+            {
+                'Link_0_1': 0.0,
+                'Link_0_2': 717,
+                'Link_2_3': 891,
+                'Link_3_1': 427
+            }
+        )
+
+    def test_obj_demands_diff_without_ceil(self):
+        self.assertDictEqual(
+            self.chromosome.calcDemands(ceil=False),
+            {
+                'Link_0_1': 0.0,
+                'Link_0_2': 450.21395806554176,
+                'Link_2_3': 464.2030872357684,
+                'Link_3_1': 81.86510076381961
+            }
+        )
+
+    def test_obj_func_value(self):
+        self.assertEqual(
+            self.chromosome.objFunc(),
+            59.9628214606513
+        )
+
