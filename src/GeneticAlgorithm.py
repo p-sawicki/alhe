@@ -60,19 +60,19 @@ class GeneticAlgorithm:
             else:
                 raise ValueError('Selection must be one of the following: rand, exp')
 
-            chosenOnesSize = len(chosenOnes)
             children: List[Chromosome] = []
 
             # Crossover
-            for idx in range(xovers):
-                firstParent = idx * 2
-                secondParent = firstParent + 1
+            idx = 0
+            for bit in xoverMask:
+                if bit == 0:
+                    children.append(chosenOnes[idx])
+                    idx += 1
+                    continue
 
-                child1, _ = Chromosome.reproduce(chosenOnes[firstParent], chosenOnes[secondParent])
+                child1, _ = Chromosome.reproduce(chosenOnes[idx], chosenOnes[idx + 1])
                 children.append(child1)
-
-            for child in range(xovers, chosenOnesSize):
-                children.append(chosenOnes[child])
+                idx += 2
 
             # Mutation
             for child in children:

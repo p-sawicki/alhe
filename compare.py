@@ -1,30 +1,36 @@
 #!/usr/bin/env python3
 import argparse
 import multiprocessing as mp
+import random
 
 from src.GeneticAlgorithm import GeneticAlgorithm
 from src.NetworkModel import NetworkModel
 
 
 def run(q: mp.Queue, net, pop, epochs, mut, single, x, sel, succ):
-    alg = GeneticAlgorithm(net, pop, epochs, mut, single, x, sel, succ)
-    q.put(alg.run(True))
+    try:
+        alg = GeneticAlgorithm(net, pop, epochs, mut, single, x, sel, succ)
+        q.put(alg.run(True))
+    except KeyboardInterrupt:
+        # Don't care didn't ask plus you're a child
+        # (disable traceback on Ctrl-C)
+        pass
 
 
 def main():
     parser = argparse.ArgumentParser(description='Compare various configurations of the genetic algorithm')
-    parser.add_argument('--repeat', '-r', metavar='N', type=int, default=32, help='Number of runs for each config')
-    parser.add_argument('--epochs', '-t', metavar='N', type=int, default=1000,
+    parser.add_argument('--repeat', '-r', metavar='N', type=int, default=30, help='Number of runs for each config')
+    parser.add_argument('--epochs', '-t', metavar='N', type=int, default=10000,
                         help='Number of cycles done before returning result')
     parser.add_argument('--model', '-f', metavar='FILE', type=str, default='polska.txt',
                         help='Path to file describing network model')
     parser.add_argument('--log', '-l', metavar='FILE', type=str, default='log.csv', help='Path to log file')
+    parser.add_argument('--multi-mode', dest='single_mode', action='store_false',
+                        help='Whether to solve problem assuming that network support packets commutation')
     args = parser.parse_args()
 
     epochs = args.epochs
-    population = [10, 100, 1000]
-    mutation = [0.25, 0.5, 0.75]
-    xover = [0.25, 0.5, 0.75]
+    mode = args.single_mode
     selection = ['rand', 'exp']
     succession = ['best', 'tourny']
 
@@ -35,34 +41,48 @@ def main():
     log.write('population; mutation factor; crossover chance; selection; succession; score\n')
 
     best = float('inf')
-    params = ()
-    for pop in population:
-        for mut in mutation:
-            for x in xover:
-                for sel in selection:
-                    for succ in succession:
-                        procs: list[mp.Process] = []
-                        q = mp.Queue()
+    params = {}
+    while True:
+        try:
+            for sel in selection:
+                for succ in succession:
+                    pop = random.randint(10, 1000) # population
+                    mut = random.uniform(0, 1) # mutation factor
+                    x = random.uniform(0, 1) # crossover chance
 
-                        avg = 0.0
-                        for i in range(args.repeat):
-                            procs.append(mp.Process(target=run, args=(q, network,
-                                                                      pop, epochs, mut, True, x, sel, succ,)))
-                            procs[i].start()
+                    # Scale number of epochs according to population in order to achieve 
+                    # similar run times for each test
+                    ep = epochs // pop
 
-                        for i in range(args.repeat):
-                            procs[i].join()
-                            score = q.get()
-                            log.write('{};{};{};{};{};{}\n'.format(pop, mut, x, sel, succ, score))
-                            avg += score
-                        avg /= args.repeat
+                    procs: list[mp.Process] = []
+                    q = mp.Queue()
 
-                        print('[{}, {}, {}, {}, {}]: {}'.format(pop, mut, x, sel, succ, avg))
+                    avg = 0.0
+                    for i in range(args.repeat):
+                        procs.append(mp.Process(target=run, args=(q, network, pop, ep, mut, 
+                                                                    mode,  x, sel, succ,)))
+                        procs[i].start()
 
-                        if avg < best:
-                            best = avg
-                            params = (pop, mut, x, sel, succ)
-    print('best params: {}, score: {}'.format(params, best))
+                    for i in range(args.repeat):
+                        procs[i].join()
+                        score = q.get()
+                        log.write('{};{};{};{};{};{}\n'.format(pop, mut, x, sel, succ, score))
+                        avg += score
+                    avg /= args.repeat
+
+                    print('[{}, {}, {}, {}, {}]: {}'.format(pop, mut, x, sel, succ, avg))
+
+                    if avg < best:
+                        best = avg
+                        params = {  'population':       pop, 
+                                    'mutation factor':  mut, 
+                                    'crossover chance': x, 
+                                    'selection mode':   sel, 
+                                    'succession mode':  succ }
+        except KeyboardInterrupt:
+            break
+
+    print('\nbest params: {}, score: {}'.format(params, best))
     log.close()
 
 
