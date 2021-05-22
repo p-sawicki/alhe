@@ -11,9 +11,18 @@ from typing import Dict
 
 try:
     import xlsxwriter as xlsx
+    from xlsxwriter.utility import xl_col_to_name
 except ImportError:
     print('[-] This utility requires xlsxwriter library. Install it first')
     raise
+
+
+def isFloat(number: str) -> bool:
+    try:
+        float(number)
+        return True
+    except ValueError:
+        return False
 
 
 def main():
@@ -40,13 +49,31 @@ def main():
                         # Make header row bold
                         worksheet.write(y, x, cell, bold)
                     else:
-                        worksheet.write(y, x, cell)
+                        if isFloat(cell):
+                            worksheet.write_number(y, x, float(cell))
+                        else:
+                            worksheet.write(y, x, cell)
         worksheets[fileName] = worksheet
 
     activePathsModules = workbook.add_worksheet('active_paths_modules')
     activePathsModules.write('A1', 'Demand name', bold)
-    # TODO:
-    #  =IF(COUNTIF($links_per_demand.$B20:$I20, $modules_per_link_per_demand.C$1) > 0, $modules_per_link_per_demand.C20, 0)
+
+    with open(os.path.join(args.input_dir, 'modules_per_link_per_demand.csv'), 'r') as f:
+        for y, line in enumerate(f.read().split('\n')):
+            for x, cell in enumerate(line.split(',')):
+                if y == 0 or x == 0:
+                    # Make header row and column bold
+                    activePathsModules.write(y, x, cell, bold)
+                else:
+                    # Write helper formula for computing objFunc value
+                    activePathsModules.write_formula(y, x,
+                                                     f'=IF('
+                                                        f'COUNTIF('
+                                                            f'$links_per_demand.$B{y+1}:$I{y+1}, '
+                                                            f'$modules_per_link_per_demand.{xl_col_to_name(x)}$1'
+                                                        f') > 0, '
+                                                        f'$modules_per_link_per_demand.{xl_col_to_name(x)}{y+1}, '
+                                                        f'0)')
 
     worksheets['activePathsModules'] = activePathsModules
 
