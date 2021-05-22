@@ -2,7 +2,7 @@
 This repository contains the implementation of evolutionary algorithm solving network design problems.
 Supports network models from [sndlib](http://sndlib.zib.de/home.action?show=/problem.details.action%3FproblemName%3Dpolska--D-B-M-N-C-A-N-N%26frameset) service.
 
-_Project created for Heuristic Algorithms subject at Warsaw University of Technology._
+_Project created for Heuristic Algorithms subject at Warsaw University of Technology_
 
 ## Prerequisite
 Install requirements specified in [`requirements.txt`](./requirements.txt):
@@ -56,10 +56,10 @@ Example usage:
 ./main.py --model polska.txt -n 123 -t 10000
 ```
 
-Computed solutions is plotted at the end by `mathplotlib` (unless `--hide-plots` flag is specified). 
-Detailed results are saved to directory provided by flag `--output` (default: `output/`).
+Computed solutions are plotted by `mathplotlib` (unless `--hide-plots` flag is specified) 
+and detailed results are saved to output director (`--output` argument, default: `output/`).
 
-Script `tools/outputToXlsx.py` can be used to convert results to Excel worksheet with some useful formulas added.
+Script `tools/outputToXlsx.py` can be used to export results to Excel worksheet with some useful formulas added.
 
 ## Example output
 
@@ -70,4 +70,27 @@ Script `tools/outputToXlsx.py` can be used to convert results to Excel worksheet
 Command used to acquire the above results:
 ```bash
 ./main.py -t 10000 -sel exp -succ tourny -n 40
+```
+
+## Testing
+Utility `compare.py` can be used to check the algorithm results for different parameters values. 
+To view all available options run it with `--help` flag.
+
+```txt
+usage: compare.py [-h] [--repeat N] [--epochs N] [--model FILE] [--log FILE]
+
+Compare various configurations of the genetic algorithm
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --repeat N, -r N      Number of runs for each config
+  --epochs N, -t N      Number of cycles done before returning result
+  --model FILE, -f FILE
+                        Path to file describing network model
+  --log FILE, -l FILE   Path to log file
+```
+
+What's more, project comes with unit tests of core components, stored in `test` directory. In order to launch tests, simply run:
+```bash
+python3 -m unittest
 ```
