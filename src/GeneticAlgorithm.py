@@ -8,7 +8,8 @@ from src.NetworkVisualizer import NetworkVisualizer
 
 
 class GeneticAlgorithm:
-    def __init__(self, network: NetworkModel, n: int, epochs: int, mutationFactor: int, singleMode: bool, xoverChance: float, selection: str, succession: str):
+    def __init__(self, network: NetworkModel, n: int, epochs: int, mutationFactor: int, singleMode: bool,
+                 xoverChance: float, selection: str, succession: str):
         self.network = network
         self.n = n
         self.epochs = epochs
@@ -27,7 +28,7 @@ class GeneticAlgorithm:
         # Create initial population
         self.population = [Chromosome(network, singleMode) for _ in range(self.n)]
 
-    def run(self, quiet : bool) -> float:
+    def run(self, quiet: bool) -> float:
         for i in range(self.epochs):
             if not quiet:
                 print(f'[i] Running epoch {i}')
@@ -41,20 +42,22 @@ class GeneticAlgorithm:
 
             xoverMask = []
             xovers = 0
-            for i in range(self.n - 1):
+            for _ in range(self.n - 1):
                 if random.uniform(0, 1) > self.xoverChance:
                     xoverMask.append(0)
                 else:
                     xoverMask.append(1)
                     xovers += 1
             onlyMutate = self.n - 1 - xovers
-            
+
             samples = onlyMutate + xovers * 2
             if self.selection == 'rand':
                 chosenOnes = random.choices(row, k=samples)
             elif self.selection == 'exp':
                 weights = [math.exp(-x) for x in range(self.n)]
                 chosenOnes = random.choices(row, weights, k=samples)
+            else:
+                raise ValueError('Selection must be one of the following: rand, exp')
 
             chosenOnesSize = len(chosenOnes)
             children: List[Chromosome] = []
@@ -76,7 +79,7 @@ class GeneticAlgorithm:
 
             # Succession
             if self.succession == 'best':
-                combined : list[Chromosome] = row[1:] + children
+                combined: list[Chromosome] = row[1:] + children
                 combined = sorted(combined, key=lambda x: x.objFunc())
 
                 self.population = [bestChrom] + combined[:self.n - 1]
@@ -89,7 +92,7 @@ class GeneticAlgorithm:
                     else:
                         self.population.append(children[idx])
 
-            assert(len(self.population) == self.n)
+            assert (len(self.population) == self.n)
 
             # Check how we're doing
             same = self.lenOfSame(i, self.costHistory[-1])
