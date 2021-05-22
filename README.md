@@ -1,11 +1,33 @@
 # Telecommunication network design solver
 This repository contains the implementation of evolutionary algorithm solving network design problems.
+Supports network models from [sndlib](http://sndlib.zib.de/home.action?show=/problem.details.action%3FproblemName%3Dpolska--D-B-M-N-C-A-N-N%26frameset) service.
+
+_Project created for Heuristic Algorithms subject at Warsaw University of Technology._
+
+## Prerequisite
+Install requirements specified in [`requirements.txt`](./requirements.txt):
+
+```shell
+# Using pip
+python3 -m pip -r requirements.txt
+
+# Using packet manager (apt)
+apt install python-networkx python-matplotlib
+
+# Using packet manager (pacman)
+pacman -S python-networkx python-matplotlib
+```
+
+Optionally, to use scripts from `tools/` directory install also `xlsxwriter` module.
+
 
 ## Usage
+Solver can be started using `main.py` script. Run with `--help` flag to list all available options:
 
 ```txt
-usage: main.py [-h] [--model FILE] [--population-size N] [--epochs N] [--mutation M] [--multi-mode]
-               [--output DIR] [--hide-plots]
+usage: main.py [-h] [--model FILE] [--population-size N] [--epochs N] [--mutation R] [--xover R]
+               [--selection TYPE] [--succession TYPE] [--multi-mode] [--output DIR] [--hide-plots]
+               [--quiet]
 
 Solve network design problems using genetic algorithm
 
@@ -16,10 +38,16 @@ optional arguments:
   --population-size N, -n N
                         Size of population used by genetic algorithm
   --epochs N, -t N      Number of cycles done before returning result
-  --mutation M, -m M    Mutation factor
+  --mutation R, -m R    Mutation factor
+  --xover R, -x R       Crossover chance
+  --selection TYPE, -sel TYPE
+                        Selection type (rand / exp)
+  --succession TYPE, -succ TYPE
+                        Succession type (best / tourny)
   --multi-mode          Whether to solve problem assuming that network support packets commutation
   --output DIR          Name of directory to which results will be saved
   --hide-plots          Whether to display plots after final cycle of genetic algorithm
+  --quiet, -q           Run without printing anything
 ```
 
 Example usage:
@@ -28,8 +56,18 @@ Example usage:
 ./main.py --model polska.txt -n 123 -t 10000
 ```
 
+Computed solutions is plotted at the end by `mathplotlib` (unless `--hide-plots` flag is specified). 
+Detailed results are saved to directory provided by flag `--output` (default: `output/`).
+
+Script `tools/outputToXlsx.py` can be used to convert results to Excel worksheet with some useful formulas added.
+
 ## Example output
 
 | Graph view | Cost function |
 | -- | -- |
 | ![graph_view](docs/network_modules.png) | ![cost func2](docs/objfunc.png) |
+
+Command used to acquire the above results:
+```bash
+./main.py -t 10000 -sel exp -succ tourny -n 40
+```
