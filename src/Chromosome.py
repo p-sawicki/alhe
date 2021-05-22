@@ -3,6 +3,7 @@ import math
 import random
 from typing import Dict, List, Tuple, Optional, Union
 
+from src.FileParser import saveSolution
 from src.NetworkModel import NetworkModel
 
 
@@ -12,6 +13,7 @@ class Gene:
         path_choice: [0, 1, 0, ...] - which paths are used
         modules: [1, 2, 0, 3, ...] - how many modules were added to each link
     """
+
     def __init__(self, name: str, network: NetworkModel, singleMode: bool = True):
         self.name: str = name
         self.path_choices: List[float] = [random.uniform(0, 1) for _ in range(network.getDemand(name).pathsCount())]
@@ -45,7 +47,7 @@ class Gene:
                     for i, choice in enumerate(self.path_choices)
                 ])
             )
-            assert(0 <= avgPos < len(self.path_choices))
+            assert (0 <= avgPos < len(self.path_choices))
 
             self.path_choices = [1 if i == avgPos else 0 for i in range(len(self.path_choices))]
 
@@ -54,6 +56,7 @@ class Chromosome:
     """
     Chromosome consists of one gene per every demand
     """
+
     def __init__(self, network: NetworkModel, singleMode: bool = True, _skipGen: bool = False):
         self.network = network
         self.singleMode = singleMode
@@ -80,6 +83,31 @@ class Chromosome:
         newObj = Chromosome(self.network, self.singleMode, True)
         newObj.genes = copy.deepcopy(self.genes)
         return newObj
+
+    def saveToXML(self, filename: str):
+        """
+        Save chromosome to XML file compatible with SNDlib platform
+        """
+        if not self.singleMode:
+            raise NotImplementedError('SaveToXML support only single-mode chromosomes')
+
+        modsPerLink = self.fixedModulesPerLink()
+        linkModules = {}
+        for link in modsPerLink:
+            linkModules[link] = {
+                'count': modsPerLink[link],
+                'capacity': self.network.links[link].module_capacity
+            }
+
+        demandsFlow = {}
+        for demandName in self.network.demands:
+            gene = self.genes[demandName]
+            path = self.network.getDemand(demandName).paths[gene.path_choices.index(1)]
+            demandsFlow[demandName] = (
+                self.network.getDemand(demandName).value,
+                [link.name for link in path]
+            )
+        saveSolution(filename, linkModules, demandsFlow)
 
     def totalLinksCapacity(self, modsPerLink: Optional[Dict[str, float]] = None, ceil: bool = True) -> Dict[str, float]:
         """

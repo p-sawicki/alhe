@@ -1,5 +1,6 @@
 import copy
 import math
+import os
 import random
 from typing import Dict, List
 
@@ -141,8 +142,11 @@ class GeneticAlgorithm:
         demandsNames = [demand for demand in self.network.demands]
         visualizer.outputCSV('path_choices.csv',
                              ['Demand name'] + [f'Path_{i}' for i in range(10)],
-                             [[name] + bestResult.genes[name].path_choices for name in demandsNames]
-                             )
+                             [
+                                 [name] +
+                                 [str(ch) for ch in bestResult.genes[name].path_choices]
+                                 for name in demandsNames
+                             ])
 
         visualizer.outputCSV('modules_per_link_per_demand.csv',
                              ['Demand name'] + [name for name in linksNames],
@@ -168,9 +172,11 @@ class GeneticAlgorithm:
                                  ['Demand name'] + [f'Link_{i}' for i in range(8)],
                                  [[name] + paths[name] for name in demandsNames]
                                  )
+
+            bestResult.saveToXML(os.path.join(visualizer.outputDir, 'solution.xml'))
         else:
             visualizer.outputCSV('link_per_demand.csv',
-                                 ['Demand name', 0], [['Not applicable...', 0]])
+                                 ['Demand name', '0'], [['Not applicable...', '0']])
 
         visualizer.outputCSV('summary.csv',
                              ['Parameter', 'Value'],

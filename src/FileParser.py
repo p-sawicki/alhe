@@ -3,8 +3,9 @@
     Using XML version of input data would be probably easier, but you need
     to find it prior to writing vast and complicated text parser
 """
+from typing import Any, Dict, List, Tuple
 
-from typing import Any, Dict, List
+import lxml.etree
 
 
 def parse(file_name: str) -> (List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]):
@@ -105,3 +106,112 @@ def parse(file_name: str) -> (List[Dict[str, Any]], List[Dict[str, Any]], List[D
         i += 1
 
     return nodes, links, demands, paths
+
+
+def loadSolution(file_name: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Load network solution provided in form of XML file. The specification of format
+    can be found on SNDlib home page.
+    Return the number of modules added to each link and routing for each demand
+    """
+    from lxml import etree as et
+
+    linksModules = {}
+    demandsFlows = {}
+
+    tree = et.parse(file_name)
+    root = tree.getroot()
+    for topGroup in root:
+        if topGroup.tag == '{http://sndlib.zib.de/solution}linkConfigurations':
+            for linkConfiguration in topGroup:
+                linkID = linkConfiguration.attrib['linkId']
+
+                if len(linkConfiguration) > 0:
+                    instModules = linkConfiguration[0]
+                    capacity = float(instModules.find('{http://sndlib.zib.de/solution}capacity').text)
+                    count = float(instModules.find('{http://sndlib.zib.de/solution}installCount').text)
+                else:
+                    capacity = 0
+                    count = 0
+
+                linksModules[linkID] = {
+                    'capacity': capacity,
+                    'count': count
+                }
+        elif topGroup.tag == '{http://sndlib.zib.de/solution}demandRoutings':
+            for demandRouting in topGroup:
+                demandID = demandRouting.get('demandId')
+
+                flows = []
+                for flowPath in demandRouting:
+                    value = float(flowPath.find('{http://sndlib.zib.de/solution}flowPathValue').text)
+                    path = []
+                    for link in flowPath.find('{http://sndlib.zib.de/solution}routingPath'):
+                        path.append(link.text)
+                    flows.append((value, path))
+                demandsFlows[demandID] = flows
+        else:
+            raise KeyError(f'Unknown XML tag found in solution file - "{topGroup.tag}"')
+
+    return linksModules, demandsFlows
+
+
+def saveSolution(fileName: str, linksModules: Dict[str, Any], demandsFlows: Dict[str, Any]):
+    """
+    Save computed solution to XML file compatible with SNDlib platform
+    linksModules must be of form:
+        {'LINK_0_1': {'capacity': 4.0, 'count': 2.0}, ...}
+    demandsFlows must be of form:
+        {'Demand_0_1': (127.0, ['Link_1', 'Link_2', ...]), ...}
+    """
+    from lxml import etree as et
+
+    root = et.Element("solution")
+    root.attrib['xmlns'] = 'http://sndlib.zib.de/solution'
+    root.attrib['version'] = '1.0'
+
+    linkConfigs = et.Element('linkConfigurations')
+    for linkName in linksModules:
+        linkModules = linksModules[linkName]
+
+        linkConfig = et.Element('linkConfiguration')
+        linkConfig.attrib['linkId'] = linkName
+
+        if linkModules['count'] > 0:
+            instModules = et.Element('installedModule')
+            capacity = et.Element('capacity')
+            count = et.Element('installCount')
+
+            capacity.text = str(linkModules['capacity'])
+            count.text = str(linkModules['count'])
+            instModules.append(capacity)
+            instModules.append(count)
+            linkConfig.append(instModules)
+
+        linkConfigs.append(linkConfig)
+    root.append(linkConfigs)
+
+    demandRoutings = et.Element('demandRoutings')
+    demandRoutings.attrib['state'] = 'NOS'
+    for demandName in demandsFlows:
+        flow = demandsFlows[demandName]
+
+        demandRouting = et.Element('demandRouting', demandId=demandName)
+        flowPath = et.Element('flowPath')
+        flowPathValue = et.Element('flowPathValue')
+        flowPathValue.text = str(flow[0])
+
+        routingPath = et.Element('routingPath')
+        for linkName in flow[1]:
+            link = et.Element('linkId')
+            link.text = linkName
+            routingPath.append(link)
+        flowPath.append(flowPathValue)
+        flowPath.append(routingPath)
+
+        demandRouting.append(flowPath)
+        demandRoutings.append(demandRouting)
+    root.append(demandRoutings)
+
+    et = lxml.etree.ElementTree(root)
+    et.write(fileName, pretty_print=True, xml_declaration=True, encoding='UTF-8')
