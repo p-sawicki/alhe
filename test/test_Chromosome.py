@@ -109,3 +109,25 @@ class TestObjFunc(TestChromosome):
             59.9628214606513
         )
 
+    def test_obj_func_value_2(self):
+        bkp = self.chromosome.genes['Demand_0_1'].modules['Link_0_2']
+        self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = 0.1
+
+        self.assertEqual(
+            self.chromosome.objFunc(),
+            45.65467703566077
+        )
+
+        self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = bkp
+
+    def test_obj_func_value_3(self):
+        bkp = self.chromosome.genes['Demand_0_1'].modules['Link_0_2']
+        self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = 0.0
+
+        self.assertEqual(
+            self.chromosome.objFunc(),
+            64.32468833910937
+        )
+
+        self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = bkp
+
