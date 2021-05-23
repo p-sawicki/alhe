@@ -1,7 +1,7 @@
 import copy
 import math
 import random
-from typing import Dict, List, Tuple, Optional, Union
+from typing import Dict, List, Tuple, Union
 
 from src.FileParser import saveSolution
 from src.NetworkModel import NetworkModel
@@ -11,19 +11,41 @@ class Gene:
     """
     Gene consists of:
         path_choice: [0, 1, 0, ...] - which paths are used
-        modules: [1, 2, 0, 3, ...] - how many modules were added to each link
     """
 
     def __init__(self, name: str, network: NetworkModel, singleMode: bool = True):
         self.name: str = name
+        self.network = network
         self.path_choices: List[float] = [random.uniform(0, 1) for _ in range(network.getDemand(name).pathsCount())]
-        self.modules: Dict[str, float] = {name: random.uniform(0, 1) for name in network.links}
         self.singleMode: bool = singleMode
 
         self.normalize()
 
     def __str__(self) -> str:
-        return f'Gene({self.name})[paths: {self.path_choices}; modules: {self.modules}]'
+        return f'Gene({self.name})[paths: {self.path_choices}]'
+
+    def __deepcopy__(self, memo) -> 'Gene':
+        """
+        When creating deepcopy of this class, avoid unnecessary copying of
+        network attribute - it's huge and the same for all instances of this class
+        """
+        newObj = Gene(self.name, self.network, self.singleMode)
+        newObj.path_choices = copy.deepcopy(self.path_choices)
+        return newObj
+
+    def getCapacity(self) -> Dict[str, float]:
+        """
+        Return the number of capacity units required to satisfy demands for
+        selected @path_choice
+        """
+        links: Dict[str, float] = {name: 0.0 for name in self.network.links}
+
+        demandValue = self.network.getDemand(self.name).value
+        for i, path_choice in enumerate(self.path_choices):
+            demandPart = demandValue * path_choice
+            for link in self.network.getDemand(self.name).paths[i]:
+                links[link.name] += demandPart
+        return links
 
     def normalize(self) -> None:
         """
@@ -92,7 +114,7 @@ class Chromosome:
         if not self.singleMode:
             raise NotImplementedError('SaveToXML support only single-mode chromosomes')
 
-        modsPerLink = self.fixedModulesPerLink()
+        modsPerLink = self.modulesPerLink()
         linkModules = {}
         for link in modsPerLink:
             linkModules[link] = {
@@ -110,61 +132,38 @@ class Chromosome:
             )
         saveSolution(filename, linkModules, demandsFlow)
 
-    def totalLinksCapacity(self, modsPerLink: Optional[Dict[str, float]] = None, ceil: bool = True) -> Dict[str, float]:
+    def totalLinksCapacity(self) -> Dict[str, float]:
         """
         Return the total capacity of each link
         """
-        if modsPerLink is None:
-            modsPerLink = self.modulesPerLink(ceil)
+        capPerLink: Dict[str, float] = {link: 0.0 for link in self.network.links}
+        for gene in self.genes.values():
+            geneCap = gene.getCapacity()
+            for linkName in self.network.links:
+                capPerLink[linkName] += geneCap[linkName]
 
-        for link in self.network.links.values():
-            modsPerLink[link.name] *= link.module_capacity
-        return modsPerLink
+        return capPerLink
 
     def modulesPerLink(self, ceil: bool = True) -> Dict[str, int]:
         """
         Return the total number of modules installed on each link
         """
         links: Dict[str, Union[float, int]] = {link.name: 0.0 for link in self.network.links.values()}
-        for demand in self.network.demands.values():
-            gene = self.genes[demand.name]
-            linksVisited = set()
 
-            for i, path in enumerate(demand.paths):
-                if gene.path_choices[i] <= 0.0:
-                    continue
-
-                for link in path:
-                    if link.name in linksVisited:
-                        continue
-                    links[link.name] += gene.modules[link.name]
-                    linksVisited.add(link.name)
+        capPerLink = self.totalLinksCapacity()
+        for linkName, link in self.network.links.items():
+            links[linkName] += capPerLink[linkName] / link.module_capacity
 
         if ceil:
             for link in links:
                 links[link] = math.ceil(links[link])
         return links
 
-    def fixedModulesPerLink(self) -> Dict[str, int]:
-        """
-        Return the total number of modules for each link with extra
-        modules added to meet demands
-        """
-        modules = self.modulesPerLink()
-
-        perLinkDemand = self.calcDemands()
-        for name in perLinkDemand:
-            diff = perLinkDemand[name]
-            if diff < 0:
-                linkCap = self.network.links[name].module_capacity
-                modules[name] += math.ceil(-diff / linkCap)
-        return modules
-
-    def calcDemands(self, ceil: bool = True) -> Dict[str, float]:
+    def calcDemands(self) -> Dict[str, float]:
         """
         For each link calculate the spare capacity
         """
-        totalLinksCap = self.totalLinksCapacity(ceil=ceil)
+        totalLinksCap = self.totalLinksCapacity()
         perLinkDemand: Dict[str, float] = {name: 0.0 for name in self.network.links}
         perLinkRatio: Dict[str, float] = {}
 
@@ -176,7 +175,8 @@ class Chromosome:
 
         for name in perLinkDemand:
             expected = perLinkDemand[name]
-            current = totalLinksCap[name]
+            modCap = self.network.links[name].module_capacity
+            current = math.ceil(totalLinksCap[name] / modCap) * modCap
             perLinkRatio[name] = current - expected
         return perLinkRatio
 
@@ -188,25 +188,17 @@ class Chromosome:
          3) minimizing the amount of wasted capacity
         """
         cost = 0.0
-        extraModules: Dict[str, int] = {name: 0 for name in self.network.links}
 
         # 1. check demands
-        perLinkDemand = self.calcDemands(ceil=False)
-        for name in perLinkDemand:
-            diff = perLinkDemand[name]
-            if diff < 0:
-                linkCap = self.network.links[name].module_capacity
-                extraModules[name] = math.ceil(-diff / linkCap)
-                cost += (-diff + extraModules[name] * linkCap) / 75
-            else:
-                cost += diff / 100
+        perLinkDemand = self.calcDemands()
+        cost += sum(perLinkDemand.values()) / 100
 
         # 2. count number of visits
-        totalVisits = sum(self.modulesPerLink().values()) + sum(extraModules.values())
+        totalVisits = sum(self.modulesPerLink().values())
         cost += totalVisits * 10
 
         # 3. count wasted network capacity
-        finalModulesCount = self.fixedModulesPerLink()
+        finalModulesCount = self.modulesPerLink()
         for linkName in finalModulesCount:
             cap = finalModulesCount[linkName] * self.network.links[linkName].module_capacity
             div = math.ceil(cap / self.k)
@@ -228,26 +220,11 @@ class Chromosome:
 
             gene = self.genes[demandName]
 
-            # Mutate modules
-            modulesVal = random.uniform(0, 1)
-            modulesPos = random.choice(list(gene.modules.keys()))
-            gene.modules[modulesPos] = modulesVal
-
-            if random.uniform(0, 1) > mutationFactor:
-                continue
-
             # Mutate path_choices
             choicesVal = random.uniform(0, 1)
             choicesPos = random.randint(0, len(gene.path_choices) - 1)
             gene.path_choices[choicesPos] = choicesVal
             gene.normalize()
-
-            if random.uniform(0, 1) > mutationFactor:
-                continue
-
-            # Add random zero to chromosome
-            modulesPos = random.choice(list(gene.modules.keys()))
-            gene.modules[modulesPos] = 0.0
 
     @staticmethod
     def reproduce(parent1: 'Chromosome', parent2: 'Chromosome') -> Tuple['Chromosome', 'Chromosome']:
@@ -270,21 +247,9 @@ class Chromosome:
             gene1.path_choices = p11 + p22
             gene2.path_choices = p21 + p12
 
-            sliceModules = random.randint(0, len(gene1.modules))
-            linesNames = [n for n in gene1.modules]
-            p11 = {k: v for k, v in gene1.modules.items() if k in linesNames[:sliceModules]}
-            p12 = {k: v for k, v in gene1.modules.items() if k in linesNames[sliceModules:]}
-            p21 = {k: v for k, v in gene2.modules.items() if k in linesNames[:sliceModules]}
-            p22 = {k: v for k, v in gene2.modules.items() if k in linesNames[sliceModules:]}
-            p11.update(p22)
-            p12.update(p21)
-            gene1.modules = p11
-            gene2.modules = p12
-
             gene1.normalize()
             gene2.normalize()
 
             assert(len(gene1.path_choices) == len(gene2.path_choices))
-            assert(len(gene1.modules) == len(gene2.modules))
 
         return child1, child2

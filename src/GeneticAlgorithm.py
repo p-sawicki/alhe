@@ -149,11 +149,12 @@ class GeneticAlgorithm:
                                  for name in demandsNames
                              ])
 
+        perLinkDemand = bestResult.modulesPerLink()
         visualizer.outputCSV('modules_per_link_per_demand.csv',
                              ['Demand name'] + [name for name in linksNames],
                              [
                                  [name] +
-                                 [str(bestResult.genes[name].modules[linkName]) for linkName in linksNames]
+                                 [str(perLinkDemand[linkName]) for linkName in linksNames]
                                  for name in demandsNames
                              ])
 
@@ -191,6 +192,6 @@ class GeneticAlgorithm:
                                  ['Network size (links)', len(self.network.links)],
                                  ['Network size (demands)', len(self.network.demands)],
                                  ['Best score', bestResult.objFunc()],
-                                 ['Total modules used', sum(bestResult.fixedModulesPerLink().values())]
+                                 ['Total modules used', sum(bestResult.modulesPerLink().values())]
                              ]
                              )
