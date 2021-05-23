@@ -50,7 +50,7 @@ def main():
 
     best = float('inf')
     params = {}
-    for i in range(args.configs):
+    for idx in range(args.configs):
         try:
             pop = random.randint(1, 25) # population
             mut = random.uniform(0, 1) # mutation factor
@@ -79,7 +79,7 @@ def main():
                 avg += score
             avg /= args.repeat
 
-            print('[{}, {}, {}, {}, {}, {}]: {}'.format(pop, mut, x, sel, succ, xm, avg), end='\r')
+            print(idx, '/', args.configs, '[{}, {}, {}, {}, {}, {}]: {}'.format(pop, mut, x, sel, succ, xm, avg), end='\r')
 
             if avg < best:
                 best = avg
