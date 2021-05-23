@@ -13,6 +13,9 @@ class TestChromosome(TestCase):
         self.network = NetworkModel('./testModel.txt')
         self.network.parse()
 
+        # TODO: Fix unit-tests
+        self.fail()
+
 
 class TestReproductionSingleMode(TestChromosome):
     def setUp(self):
@@ -36,13 +39,13 @@ class TestReproductionSingleMode(TestChromosome):
         self.assertEqual(len(self.child2.genes), len(self.chromosome2.genes))
 
         for gene in self.child1.genes.values():
-            self.assertEqual(len(gene.modules), len(self.network.links))
+            self.assertEqual(len(gene.getModules()), len(self.network.links))
             self.assertEqual(
                 len(gene.path_choices),
                 self.network.getDemand(gene.name).pathsCount()
             )
         for gene in self.child2.genes.values():
-            self.assertEqual(len(gene.modules), len(self.network.links))
+            self.assertEqual(len(gene.getModules()), len(self.network.links))
             self.assertEqual(
                 len(gene.path_choices),
                 self.network.getDemand(gene.name).pathsCount()
@@ -70,13 +73,6 @@ class TestReproductionSingleMode(TestChromosome):
                                 id(self.chromosome1.genes[demandName].path_choices))
             self.assertNotEqual(id(self.child1.genes[demandName].path_choices),
                                 id(self.chromosome2.genes[demandName].path_choices))
-
-            self.assertNotEqual(id(self.child1.genes[demandName].modules),
-                                id(self.child2.genes[demandName].modules))
-            self.assertNotEqual(id(self.child1.genes[demandName].modules),
-                                id(self.chromosome1.genes[demandName].modules))
-            self.assertNotEqual(id(self.child1.genes[demandName].modules),
-                                id(self.chromosome2.genes[demandName].modules))
 
 
 class TestObjFunc(TestChromosome):
@@ -139,25 +135,25 @@ class TestObjFunc(TestChromosome):
             59.9628214606513
         )
 
-    def test_obj_func_value_2(self):
-        bkp = self.chromosome.genes['Demand_0_1'].modules['Link_0_2']
-        self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = 0.1
-
-        self.assertEqual(
-            self.chromosome.objFunc(),
-            45.65467703566077
-        )
-
-        self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = bkp
-
-    def test_obj_func_value_3(self):
-        bkp = self.chromosome.genes['Demand_0_1'].modules['Link_0_2']
-        self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = 0.0
-
-        self.assertEqual(
-            self.chromosome.objFunc(),
-            64.32468833910937
-        )
-
-        self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = bkp
+    # def test_obj_func_value_2(self):
+    #     bkp = self.chromosome.genes['Demand_0_1'].modules['Link_0_2']
+    #     self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = 0.1
+    #
+    #     self.assertEqual(
+    #         self.chromosome.objFunc(),
+    #         45.65467703566077
+    #     )
+    #
+    #     self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = bkp
+    #
+    # def test_obj_func_value_3(self):
+    #     bkp = self.chromosome.genes['Demand_0_1'].modules['Link_0_2']
+    #     self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = 0.0
+    #
+    #     self.assertEqual(
+    #         self.chromosome.objFunc(),
+    #         64.32468833910937
+    #     )
+    #
+    #     self.chromosome.genes['Demand_0_1'].modules['Link_0_2'] = bkp
 
