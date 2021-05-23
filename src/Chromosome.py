@@ -235,21 +235,30 @@ class Chromosome:
         """
         child = copy.deepcopy(parent1)
 
-        for demandName in parent1.genes:
-            gene1 = parent1.genes[demandName]
-            gene2 = parent2.genes[demandName]
-            childGene = child.genes[demandName]
-            size = len(gene1.path_choices)
+        if xoverMode == 'hor-slice':
+            demandsNames = list(parent1.genes.keys())
+            slicePos = random.randint(0, len(demandsNames) - 1)
 
-            if xoverMode == 'avg':
-                childGene.path_choices = [
-                    (gene1.path_choices[i] + gene2.path_choices[i]) / 2 for i in range(size)]
-            elif xoverMode == 'slice':
-                slicePoint = random.randint(0, size)
-                childGene.path_choices[:slicePoint] = gene1.path_choices[:slicePoint]
-                childGene.path_choices[slicePoint:] = gene2.path_choices[slicePoint:]
-            else:
-                raise ValueError('Crossover mode must be one of the following: avg, slice')
-            childGene.normalize()
+            for name in demandsNames[:slicePos]:
+                child.genes[name].path_choices = copy.deepcopy(parent1.genes[name].path_choices)
+            for name in demandsNames[slicePos:]:
+                child.genes[name].path_choices = copy.deepcopy(parent2.genes[name].path_choices)
+        else:
+            for demandName in parent1.genes:
+                gene1 = parent1.genes[demandName]
+                gene2 = parent2.genes[demandName]
+                childGene = child.genes[demandName]
+                size = len(gene1.path_choices)
+
+                if xoverMode == 'avg':
+                    childGene.path_choices = [
+                        (gene1.path_choices[i] + gene2.path_choices[i]) / 2 for i in range(size)]
+                elif xoverMode == 'vert-slice':
+                    slicePoint = random.randint(0, size)
+                    childGene.path_choices[:slicePoint] = gene1.path_choices[:slicePoint]
+                    childGene.path_choices[slicePoint:] = gene2.path_choices[slicePoint:]
+                else:
+                    raise ValueError('Crossover mode must be one of the following: avg, vert-slice, hor-slice')
+                childGene.normalize()
 
         return child
