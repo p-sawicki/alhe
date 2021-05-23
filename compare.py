@@ -39,7 +39,7 @@ def main():
     mode = args.single_mode
     selection = ['rand', 'exp']
     succession = ['best', 'tourny']
-    xover_mode = ['avg', 'hor-slice', 'ver-slice']
+    xover_mode = ['avg', 'hor-slice', 'vert-slice']
     mod = args.modularity
 
     network = NetworkModel(args.model)
