@@ -13,13 +13,14 @@ class Gene:
         path_choice: [0, 1, 0, ...] - which paths are used
     """
 
-    def __init__(self, name: str, network: NetworkModel, singleMode: bool = True):
+    def __init__(self, name: str, network: NetworkModel, singleMode: bool = True, _skipGen: bool = False):
         self.name: str = name
         self.network = network
-        self.path_choices: List[float] = [random.uniform(0, 1) for _ in range(network.getDemand(name).pathsCount())]
         self.singleMode: bool = singleMode
 
-        self.normalize()
+        if not _skipGen:
+            self.path_choices: List[float] = [random.uniform(0, 1) for _ in range(network.getDemand(name).pathsCount())]
+            self.normalize()
 
     def __str__(self) -> str:
         return f'Gene({self.name})[paths: {self.path_choices}]'
@@ -29,7 +30,7 @@ class Gene:
         When creating deepcopy of this class, avoid unnecessary copying of
         network attribute - it's huge and the same for all instances of this class
         """
-        newObj = Gene(self.name, self.network, self.singleMode)
+        newObj = Gene(self.name, self.network, self.singleMode, _skipGen=True)
         newObj.path_choices = copy.deepcopy(self.path_choices)
         return newObj
 
@@ -221,7 +222,7 @@ class Chromosome:
             gene = self.genes[demandName]
 
             # Mutate path_choices
-            choicesVal = random.uniform(0, 1)
+            choicesVal = random.uniform(0, 2)
             choicesPos = random.randint(0, len(gene.path_choices) - 1)
             gene.path_choices[choicesPos] = choicesVal
             gene.normalize()
@@ -235,21 +236,33 @@ class Chromosome:
         child1 = copy.deepcopy(parent1)
         child2 = copy.deepcopy(parent2)
 
-        for demandName in child1.genes:
-            gene1 = child1.genes[demandName]
-            gene2 = child2.genes[demandName]
+        if random.uniform(0, 1) < 0.5:
+            # Vertical slice
+            for demandName in child1.genes:
+                gene1 = child1.genes[demandName]
+                gene2 = child2.genes[demandName]
 
-            slicePaths = random.randint(0, len(gene1.path_choices) - 1)
-            p11 = gene1.path_choices[:slicePaths]
-            p12 = gene1.path_choices[slicePaths:]
-            p21 = gene2.path_choices[:slicePaths]
-            p22 = gene2.path_choices[slicePaths:]
-            gene1.path_choices = p11 + p22
-            gene2.path_choices = p21 + p12
+                slicePaths = random.randint(0, len(gene1.path_choices) - 1)
+                p11 = gene1.path_choices[:slicePaths]
+                p12 = gene1.path_choices[slicePaths:]
+                p21 = gene2.path_choices[:slicePaths]
+                p22 = gene2.path_choices[slicePaths:]
+                gene1.path_choices = p11 + p22
+                gene2.path_choices = p21 + p12
 
-            gene1.normalize()
-            gene2.normalize()
+                gene1.normalize()
+                gene2.normalize()
+                assert(len(gene1.path_choices) == len(gene2.path_choices))
+        else:
+            # Horizontal slice
+            demandsNames = list(parent1.genes.keys())
+            slicePos = random.randint(0, len(demandsNames) - 1)
 
-            assert(len(gene1.path_choices) == len(gene2.path_choices))
+            for name in demandsNames[:slicePos]:
+                child1.genes[name].path_choices = copy.deepcopy(parent1.genes[name].path_choices)
+                child2.genes[name].path_choices = copy.deepcopy(parent2.genes[name].path_choices)
+            for name in demandsNames[slicePos:]:
+                child1.genes[name].path_choices = copy.deepcopy(parent2.genes[name].path_choices)
+                child2.genes[name].path_choices = copy.deepcopy(parent1.genes[name].path_choices)
 
         return child1, child2
