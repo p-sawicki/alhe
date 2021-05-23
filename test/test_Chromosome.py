@@ -48,6 +48,36 @@ class TestReproductionSingleMode(TestChromosome):
                 self.network.getDemand(gene.name).pathsCount()
             )
 
+    def test_ids(self):
+        self.assertNotEqual(id(self.child1), id(self.child2))
+
+        self.assertNotEqual(id(self.child1), id(self.chromosome1))
+        self.assertNotEqual(id(self.child1), id(self.chromosome2))
+        self.assertNotEqual(id(self.child2), id(self.chromosome1))
+        self.assertNotEqual(id(self.child2), id(self.chromosome2))
+
+        self.assertEqual(id(self.child1.network), id(self.chromosome1.network))
+        self.assertEqual(id(self.child2.network), id(self.chromosome2.network))
+
+        for demandName in self.child1.genes:
+            self.assertNotEqual(id(self.child1.genes[demandName]), id(self.child2.genes[demandName]))
+            self.assertNotEqual(id(self.child1.genes[demandName]), id(self.chromosome1.genes[demandName]))
+            self.assertNotEqual(id(self.child1.genes[demandName]), id(self.chromosome2.genes[demandName]))
+
+            self.assertNotEqual(id(self.child1.genes[demandName].path_choices),
+                                id(self.child2.genes[demandName].path_choices))
+            self.assertNotEqual(id(self.child1.genes[demandName].path_choices),
+                                id(self.chromosome1.genes[demandName].path_choices))
+            self.assertNotEqual(id(self.child1.genes[demandName].path_choices),
+                                id(self.chromosome2.genes[demandName].path_choices))
+
+            self.assertNotEqual(id(self.child1.genes[demandName].modules),
+                                id(self.child2.genes[demandName].modules))
+            self.assertNotEqual(id(self.child1.genes[demandName].modules),
+                                id(self.chromosome1.genes[demandName].modules))
+            self.assertNotEqual(id(self.child1.genes[demandName].modules),
+                                id(self.chromosome2.genes[demandName].modules))
+
 
 class TestObjFunc(TestChromosome):
     def setUp(self):
