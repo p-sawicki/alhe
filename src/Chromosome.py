@@ -228,41 +228,28 @@ class Chromosome:
             gene.normalize()
 
     @staticmethod
-    def reproduce(parent1: 'Chromosome', parent2: 'Chromosome') -> Tuple['Chromosome', 'Chromosome']:
+    def reproduce(parent1: 'Chromosome', parent2: 'Chromosome', xoverMode) -> 'Chromosome':
         """
         Trivial implementation of one point slice. For each gene, randomly select
         slice point for paths_choices and modules count
         """
-        child1 = copy.deepcopy(parent1)
-        child2 = copy.deepcopy(parent2)
+        child = copy.deepcopy(parent1)
 
-        if random.uniform(0, 1) < 0.5:
-            # Vertical slice
-            for demandName in child1.genes:
-                gene1 = child1.genes[demandName]
-                gene2 = child2.genes[demandName]
+        for demandName in parent1.genes:
+            gene1 = parent1.genes[demandName]
+            gene2 = parent2.genes[demandName]
+            childGene = child.genes[demandName]
+            size = len(gene1.path_choices)
 
-                slicePaths = random.randint(0, len(gene1.path_choices) - 1)
-                p11 = gene1.path_choices[:slicePaths]
-                p12 = gene1.path_choices[slicePaths:]
-                p21 = gene2.path_choices[:slicePaths]
-                p22 = gene2.path_choices[slicePaths:]
-                gene1.path_choices = p11 + p22
-                gene2.path_choices = p21 + p12
+            if xoverMode == 'avg':
+                childGene.path_choices = [
+                    (gene1.path_choices[i] + gene2.path_choices[i]) / 2 for i in range(size)]
+            elif xoverMode == 'slice':
+                slicePoint = random.randint(0, size)
+                childGene.path_choices[:slicePoint] = gene1.path_choices[:slicePoint]
+                childGene.path_choices[slicePoint:] = gene2.path_choices[slicePoint:]
+            else:
+                raise ValueError('Crossover mode must be one of the following: avg, slice')
+            childGene.normalize()
 
-                gene1.normalize()
-                gene2.normalize()
-                assert(len(gene1.path_choices) == len(gene2.path_choices))
-        else:
-            # Horizontal slice
-            demandsNames = list(parent1.genes.keys())
-            slicePos = random.randint(0, len(demandsNames) - 1)
-
-            for name in demandsNames[:slicePos]:
-                child1.genes[name].path_choices = copy.deepcopy(parent1.genes[name].path_choices)
-                child2.genes[name].path_choices = copy.deepcopy(parent2.genes[name].path_choices)
-            for name in demandsNames[slicePos:]:
-                child1.genes[name].path_choices = copy.deepcopy(parent2.genes[name].path_choices)
-                child2.genes[name].path_choices = copy.deepcopy(parent1.genes[name].path_choices)
-
-        return child1, child2
+        return child

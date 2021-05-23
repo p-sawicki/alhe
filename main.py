@@ -16,10 +16,12 @@ def main():
                         help='Number of cycles done before returning result')
     parser.add_argument('--mutation', '-m', metavar='R', type=float, default=0.3, help='Mutation factor')
     parser.add_argument('--xover', '-x', metavar='R', type=float, default=0.5, help='Crossover chance')
-    parser.add_argument('--selection', '-sel', metavar='TYPE', type=str, default='exp', choices=['rand', 'exp'],
-                        help='Selection type (rand / exp)')
-    parser.add_argument('--succession', '-succ', metavar='TYPE', type=str, default='best', choices=['best', 'tourny'],
-                        help='Succession type (best / tourny)')
+    parser.add_argument('--xover-mode', '-xm', metavar='MODE', type=str, default='avg', choices=['avg', 'slice'],
+                        help='Crossover mode (avg / slice)')
+    parser.add_argument('--selection', '-sel', metavar='MODE', type=str, default='exp', choices=['rand', 'exp'],
+                        help='Selection mode (rand / exp)')
+    parser.add_argument('--succession', '-succ', metavar='MODE', type=str, default='best', choices=['best', 'tourny'],
+                        help='Succession mode (best / tourny)')
     parser.add_argument('--modularity', '-mod', metavar='K', type=int, default=1,
                         help='Modularity of links')
     parser.add_argument('--multi-mode', dest='single_mode', action='store_false',
@@ -37,7 +39,7 @@ def main():
 
     # Roll the genetic algorithm
     genetic = GeneticAlgorithm(network, args.population_size, args.epochs, args.mutation, args.single_mode,
-                               args.xover, args.selection, args.succession, args.modularity)
+                               args.xover, args.selection, args.succession, args.modularity, args.xover_mode)
     genetic.run(args.quiet)
 
     if not args.quiet:
