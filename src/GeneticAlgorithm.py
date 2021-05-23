@@ -11,13 +11,14 @@ from src.NetworkVisualizer import NetworkVisualizer
 
 class GeneticAlgorithm:
     def __init__(self, network: NetworkModel, n: int, epochs: int, mutationFactor: int, singleMode: bool,
-                 xoverChance: float, selection: str, succession: str, modularity: int):
+                 xoverChance: float, selection: str, succession: str, modularity: int, xoverMode: str):
         self.network = network
         self.n = n
         self.epochs = epochs
         self.mutationFactor = mutationFactor
         self.singleMode = singleMode
         self.xoverChance = xoverChance
+        self.xoverMode = xoverMode
         self.selection = selection
         self.succession = succession
         self.modularity = modularity
@@ -72,8 +73,8 @@ class GeneticAlgorithm:
                     idx += 1
                     continue
 
-                child1, _ = Chromosome.reproduce(chosenOnes[idx], chosenOnes[idx + 1])
-                children.append(child1)
+                child = Chromosome.reproduce(chosenOnes[idx], chosenOnes[idx + 1], self.xoverMode)
+                children.append(child)
                 idx += 2
 
             # Mutation
