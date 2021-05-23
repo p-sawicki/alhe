@@ -237,7 +237,7 @@ class Chromosome:
 
         if xoverMode == 'hor-slice':
             demandsNames = list(parent1.genes.keys())
-            slicePos = random.randint(0, len(demandsNames) - 1)
+            slicePos = random.randint(0, len(demandsNames))
 
             for name in demandsNames[:slicePos]:
                 child.genes[name].path_choices = copy.deepcopy(parent1.genes[name].path_choices)
