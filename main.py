@@ -20,8 +20,8 @@ def main():
                         help='Crossover mode (avg / vert-slice / hor-slice)')
     parser.add_argument('--selection', '-sel', metavar='MODE', type=str, default='exp', choices=['rand', 'exp'],
                         help='Selection mode (rand / exp)')
-    parser.add_argument('--succession', '-succ', metavar='MODE', type=str, default='best', choices=['best', 'tourny'],
-                        help='Succession mode (best / tourny)')
+    parser.add_argument('--succession', '-succ', metavar='MODE', type=str, default='best', choices=['best', 'tourney'],
+                        help='Succession mode (best / tourney)')
     parser.add_argument('--modularity', '-mod', metavar='K', type=int, default=1,
                         help='Modularity of links')
     parser.add_argument('--multi-mode', dest='single_mode', action='store_false',

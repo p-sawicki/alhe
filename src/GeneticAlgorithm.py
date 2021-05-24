@@ -87,7 +87,7 @@ class GeneticAlgorithm:
                 combined = sorted(combined, key=lambda x: x.objFunc())
 
                 self.population = [bestChrom] + combined[:self.n - 1]
-            elif self.succession == 'tourny':
+            elif self.succession == 'tourney':
                 self.population = [bestChrom]
 
                 for idx in range(self.n - 1):
@@ -96,7 +96,7 @@ class GeneticAlgorithm:
                     else:
                         self.population.append(children[idx])
             else:
-                raise ValueError('Invalid succession mode, expected: best or tourny')
+                raise ValueError('Invalid succession mode, expected: best or tourney')
 
             assert (len(self.population) == self.n)
 
