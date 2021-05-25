@@ -26,7 +26,7 @@ def main():
                         help='Path to file describing network model')
     parser.add_argument('--log', '-l', metavar='FILE', type=str, default='log.csv', help='Path to log file')
     parser.add_argument('--multi-mode', dest='single_mode', action='store_false',
-                        help='Whether to solve problem assuming that network support packets commutation')
+                        help='Whether to solve problem assuming that network support packet aggregation')
     parser.add_argument('--modularity', '-mod', metavar='K', type=int, default=1,
                         help='Modularity of links')
     parser.add_argument('--configs', '-c', metavar='N', type=int, default=1000, help='Number of configs to test')

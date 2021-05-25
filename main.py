@@ -25,7 +25,7 @@ def main():
     parser.add_argument('--modularity', '-mod', metavar='K', type=int, default=1,
                         help='Modularity of links')
     parser.add_argument('--multi-mode', dest='single_mode', action='store_false',
-                        help='Whether to solve problem assuming that network support packets commutation')  # FIXME
+                        help='Whether to solve problem assuming that network support packet aggregation')
     parser.add_argument('--output', metavar='DIR', dest='output_dir', type=str, default='output',
                         help='Name of directory to which results will be saved')
     parser.add_argument('--hide-plots', dest='show_plots', action='store_false',
