@@ -1,4 +1,5 @@
-from typing import List, Dict
+import queue
+from typing import List, Dict, Tuple
 
 import src.FileParser as FileParser
 
@@ -83,10 +84,66 @@ class NetworkModel:
             self.nodes[node['name']] = Node(**node)
         for link in links:
             self.links[link['name']] = Link(**link)
-        paths = {path['name']: [[self.links[x] for x in p] for p in path['paths']] for path in paths}
+        if not paths:
+            paths = self.generateAdmissiblePaths(demands)
+        else:
+            paths = {path['name']: [[self.links[x] for x in p] for p in path['paths']] for path in paths}
+
         for demand in demands:
             name = demand['name']
             self.demands[name] = Demand(**demand, paths=paths[name])
+
+    def generateAdmissiblePaths(self, demands: List[Dict], maxPathsPerDemand: int = 3) -> Dict[str, List[List[Link]]]:
+        """
+        Generate admissible paths using BFS with max. number of found paths provided
+        as 1st argument
+        """
+        edges: Dict[str, List[str]] = {nodeName: [] for nodeName in self.nodes.keys()}
+        for link in self.links.values():
+            edges[link.source].append(link.target)
+            edges[link.target].append(link.source)
+
+        linksByEdges: Dict[Tuple[str, str], Link] = {}
+        for edgeA in edges:
+            for edgeB in edges[edgeA]:
+                linksByEdges[edgeA, edgeB] = [
+                    link
+                    for link in self.links.values()
+                    if (link.source, link.target) == (edgeA, edgeB) or (link.source, link.target) == (edgeB, edgeA)
+                ][0]
+
+        def bfs(startNode: str, targetNode: str, maxPaths: int) -> List[List[Link]]:
+            """
+            Run BFS on `edges` graph, starting from @startNode to @targetNode. Stop
+            when no more paths exist or more than maxPaths were found
+            """
+            result = []
+
+            visited = set()
+            nodesQueue = queue.Queue()
+            nodesQueue.put((startNode, [startNode]))
+
+            while not nodesQueue.empty() and len(result) < maxPaths:
+                cur, path = nodesQueue.get()
+                visited.add(cur)
+
+                for node in edges[cur]:
+                    if node == targetNode:
+                        # Now convert list of nodes to list of links
+                        foundPath = path + [node]
+                        final = []
+                        for i in range(0, len(foundPath) - 1):
+                            final.append(linksByEdges[foundPath[i], foundPath[i+1]])
+                        result.append(final)
+                    elif node not in visited:
+                        nodesQueue.put((node, path + [node]))
+            return result[:maxPaths]
+
+        # Run BFS for each demand
+        foundPaths: Dict[str, List[List[Link]]] = {}
+        for demand in demands:
+            foundPaths[demand['name']] = bfs(demand['source'], demand['target'], maxPathsPerDemand)
+        return foundPaths
 
     def getDemand(self, name: str) -> Demand:
         return self.demands[name]
