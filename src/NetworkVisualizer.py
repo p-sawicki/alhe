@@ -31,14 +31,14 @@ class NetworkVisualizer:
         modsPerLink = chromosome.modulesPerLink()
 
         for name, node in network.nodes.items():
-            G.add_node(name, pos=(node.lon - 14, node.lat - 50))
+            G.add_node(name, pos=(node.lon, node.lat))
         for link in network.links.values():
             G.add_edge(link.source, link.target)
             edgeLabels[(link.source, link.target)] = modsPerLink[link.name]
 
         pos = nx.get_node_attributes(G, 'pos')
 
-        nx.draw(G, pos, with_labels=True)
+        nx.draw(G, pos, with_labels=True, node_size=100)
         nx.draw_networkx_edge_labels(G, pos, edge_labels=edgeLabels, font_color='red')
 
         plt.savefig(self.getPath('network_modules.png'))
