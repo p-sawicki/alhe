@@ -164,7 +164,7 @@ def saveSolution(fileName: str, linksModules: Dict[str, Any], demandsFlows: Dict
     linksModules must be of form:
         {'LINK_0_1': {'capacity': 4.0, 'count': 2.0}, ...}
     demandsFlows must be of form:
-        {'Demand_0_1': (127.0, ['Link_1', 'Link_2', ...]), ...}
+        {'Demand_0_1': [(127.0, ['Link_1', 'Link_2', ...])], ...}
     """
     try:
         from lxml import etree as et
@@ -200,22 +200,23 @@ def saveSolution(fileName: str, linksModules: Dict[str, Any], demandsFlows: Dict
     demandRoutings = et.Element('demandRoutings')
     demandRoutings.attrib['state'] = 'NOS'
     for demandName in demandsFlows:
-        flow = demandsFlows[demandName]
+        flows = demandsFlows[demandName]
 
         demandRouting = et.Element('demandRouting', demandId=demandName)
-        flowPath = et.Element('flowPath')
-        flowPathValue = et.Element('flowPathValue')
-        flowPathValue.text = str(flow[0])
+        for flow in flows:
+            flowPath = et.Element('flowPath')
+            flowPathValue = et.Element('flowPathValue')
+            flowPathValue.text = str(flow[0])
 
-        routingPath = et.Element('routingPath')
-        for linkName in flow[1]:
-            link = et.Element('linkId')
-            link.text = linkName
-            routingPath.append(link)
-        flowPath.append(flowPathValue)
-        flowPath.append(routingPath)
+            routingPath = et.Element('routingPath')
+            for linkName in flow[1]:
+                link = et.Element('linkId')
+                link.text = linkName
+                routingPath.append(link)
+            flowPath.append(flowPathValue)
+            flowPath.append(routingPath)
 
-        demandRouting.append(flowPath)
+            demandRouting.append(flowPath)
         demandRoutings.append(demandRouting)
     root.append(demandRoutings)
 
