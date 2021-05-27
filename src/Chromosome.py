@@ -112,9 +112,6 @@ class Chromosome:
         """
         Save chromosome to XML file compatible with SNDlib platform
         """
-        if not self.singleMode:
-            raise NotImplementedError('SaveToXML support only single-mode chromosomes')
-
         modsPerLink = self.modulesPerLink()
         linkModules = {}
         for link in modsPerLink:
@@ -126,11 +123,17 @@ class Chromosome:
         demandsFlow = {}
         for demandName in self.network.demands:
             gene = self.genes[demandName]
-            path = self.network.getDemand(demandName).paths[gene.path_choices.index(1)]
-            demandsFlow[demandName] = (
-                self.network.getDemand(demandName).value,
-                [link.name for link in path]
-            )
+            demandsFlow[demandName] = []
+
+            for i, pathChoice in enumerate(gene.path_choices):
+                if pathChoice == 0:
+                    continue
+
+                path = self.network.getDemand(demandName).paths[i]
+                demandsFlow[demandName].append((
+                    self.network.getDemand(demandName).value * pathChoice,
+                    [link.name for link in path]
+                ))
         saveSolution(filename, linkModules, demandsFlow)
 
     def totalLinksCapacity(self) -> Dict[str, float]:
